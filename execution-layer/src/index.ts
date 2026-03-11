@@ -42,23 +42,26 @@ app.post('/execute', async (req, res): Promise<void> => {
     return;
   }
 
-  const container = await docker.createContainer({
-    Image: dockerImg,
-    Cmd: executionCmd,
-    Tty: false,
-    HostConfig: {
-      Memory: 128 * 1024 * 1024,
-      NetworkMode: "none"
-    }
-  })
+  let container: Docker.Container | null = null;
 
   try {
+
+    container = await docker.createContainer({
+      Image: dockerImg,
+      Cmd: executionCmd,
+      Tty: false,
+      HostConfig: {
+        Memory: 128 * 1024 * 1024,
+        NetworkMode: "none"
+      }
+    })
+
     await container.start();
 
     const timeoutLimit = 10000;
     let timedOut = false;
 
-    Promise.race([
+    await Promise.race([
       container.wait(),
       setTimeout(() => {
         timedOut = true;
