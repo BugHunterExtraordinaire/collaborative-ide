@@ -74,14 +74,16 @@ app.post('/execute', async (req, res): Promise<void> => {
     res.json({ output });
 
   } catch (error: any) {
-    console.error("[Execution Layer] Error:", error.message);
+    console.error(`Error: ${error.message}`);
     res.status(500).json({ message: `Error: ${error.message}` });
   } finally {
     try {
-      console.log("[Execution Layer] Cleanup phase initiated.");
+      console.log("Error: Cleanup phase initiated.");
 
     } catch (cleanupError) {
-      console.error("[Execution Layer] Failed to cleanup container:", cleanupError);
+      console.error("Error: Failed to cleanup container:", cleanupError);
     }
   }
 });
+
+app.listen(port, () => console.log(`Runner Service listening on http://localhost:${port}`));
