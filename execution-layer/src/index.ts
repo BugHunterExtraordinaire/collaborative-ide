@@ -15,6 +15,27 @@ interface ExecutionRequest {
   language: 'python' | 'cpp' | 'javascript';
 }
 
+async function ensureImageExists(docker: Docker, imageName: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    console.log(`Checking image: ${imageName}...`);
+    docker.pull(imageName, (err: any, stream: any) => {
+      if (err) return reject(err);
+      
+      docker.modem.followProgress(stream, onFinished, onProgress);
+
+      function onFinished(err: any, output: any) {
+        if (err) return reject(err);
+        console.log(`Image ${imageName} is ready.`);
+        resolve();
+      }
+
+      function onProgress(event: any) {
+        
+      }
+    });
+  });
+}
+
 app.post('/execute', async (req, res): Promise<void> => {
   const { code, language } = req.body as ExecutionRequest;
 
@@ -23,7 +44,7 @@ app.post('/execute', async (req, res): Promise<void> => {
     return;
   };
 
-  console.log(`[Execution Layer] Received ${language} execution request.`);
+  console.log(`Received ${language} execution request.`);
 
   let dockerImg: string = "";
   let executionCmd: Array<string> = [];
@@ -45,6 +66,8 @@ app.post('/execute', async (req, res): Promise<void> => {
   let container: Docker.Container | null = null;
 
   try {
+    
+    await ensureImageExists(docker, dockerImg);
 
     container = await docker.createContainer({
       Image: dockerImg,
@@ -81,12 +104,12 @@ app.post('/execute', async (req, res): Promise<void> => {
     res.status(500).json({ message: `Error: ${error.message}` });
   } finally {
     if (container) {
-      console.log("[Execution Layer] Cleanup phase initiated.");
+      console.log("Cleanup phase initiated.");
       try {
         await container.remove({ force: true });
-        console.log("[Execution Layer] Container removed successfully.");
+        console.log("Container removed successfully.");
       } catch (cleanupError) {
-        console.error("[Execution Layer] Failed to cleanup container:", cleanupError);
+        console.error("Failed to cleanup container:", cleanupError);
       }
     }
   }
