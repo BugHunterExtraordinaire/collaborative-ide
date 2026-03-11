@@ -53,7 +53,22 @@ app.post('/execute', async (req, res): Promise<void> => {
   })
 
   try {
+    await container.start();
+
+    const timeoutLimit = 10000;
+    let timedOut = false;
     
+    Promise.race([
+      container.wait(),
+      setTimeout(() => {
+        timedOut = true;
+        throw new Error("Error: Execution timed out (Limit: 10 seconds).");
+      }, timeoutLimit)
+    ]);
+
+    if (timedOut) return;
+
+
   } catch (error) {
      
   } finally {
