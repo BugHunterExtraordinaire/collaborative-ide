@@ -80,11 +80,14 @@ app.post('/execute', async (req, res): Promise<void> => {
     console.error(`Error: ${error.message}`);
     res.status(500).json({ message: `Error: ${error.message}` });
   } finally {
-    try {
-      console.log("Error: Cleanup phase initiated.");
-
-    } catch (cleanupError) {
-      console.error("Error: Failed to cleanup container:", cleanupError);
+    if (container) {
+      console.log("[Execution Layer] Cleanup phase initiated.");
+      try {
+        await container.remove({ force: true });
+        console.log("[Execution Layer] Container removed successfully.");
+      } catch (cleanupError) {
+        console.error("[Execution Layer] Failed to cleanup container:", cleanupError);
+      }
     }
   }
 });
