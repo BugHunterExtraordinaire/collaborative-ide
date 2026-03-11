@@ -57,7 +57,7 @@ app.post('/execute', async (req, res): Promise<void> => {
 
     const timeoutLimit = 10000;
     let timedOut = false;
-    
+
     Promise.race([
       container.wait(),
       setTimeout(() => {
@@ -68,10 +68,20 @@ app.post('/execute', async (req, res): Promise<void> => {
 
     if (timedOut) return;
 
+    const logs = await container.logs({ stdout: true, stderr: true });
+    const output = logs.toString('utf8').replace(/[\x00-\x1F\x7F]/g, "").trim();
 
-  } catch (error) {
-     
+    res.json({ output });
+
+  } catch (error: any) {
+    console.error("[Execution Layer] Error:", error.message);
+    res.status(500).json({ message: `Error: ${error.message}` });
   } finally {
+    try {
+      console.log("[Execution Layer] Cleanup phase initiated.");
 
+    } catch (cleanupError) {
+      console.error("[Execution Layer] Failed to cleanup container:", cleanupError);
+    }
   }
 });
