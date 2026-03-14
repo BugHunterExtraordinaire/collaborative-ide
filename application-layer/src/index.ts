@@ -17,3 +17,18 @@ const io = new Server(server, {
 
 const port = process.env.PORT || 3000;
 
+io.on("connection", (socket: Socket) => {
+  console.log(`New client connected: ${socket.id}`);
+  
+  socket.on("join-session", (sessionId: string) => {
+    socket.join(sessionId);
+    console.log(`Socket ${socket.id} joined session: ${sessionId}`);
+
+    socket.to(sessionId).emit("user-joined", { socketId: socket.id });
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`Client disconnected: ${socket.id}`);
+  });
+});
+
