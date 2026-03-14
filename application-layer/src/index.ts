@@ -32,3 +32,6 @@ io.on("connection", (socket: Socket) => {
   });
 });
 
+server.listen(port, () => {
+  console.log(`WebSocket Server running on http://localhost:${port}`);
+});
