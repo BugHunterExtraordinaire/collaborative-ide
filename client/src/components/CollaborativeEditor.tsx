@@ -5,7 +5,13 @@ import { WebsocketProvider } from 'y-websocket';
 import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 
-export default function CollaborativeEditor() {
+interface CollaborativeEditorProps {
+  sessionId: string;
+  language: string;
+  onCodeChange: (code: string) => void;
+}
+
+export default function CollaborativeEditor({ sessionId, language, onCodeChange }: CollaborativeEditorProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const [status, setStatus] = useState<string>('Connecting...');
 
