@@ -1,121 +1,87 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import axios from 'axios';
+import CollaborativeEditor from './components/CollaborativeEditor';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [code, setCode] = useState<string>('');
+  const [output, setOutput] = useState<string>('System Ready. Awaiting execution...');
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [language, setLanguage] = useState<string>('javascript');
+
+  const sessionId = 'test-room-1';
+
+  const handleRunCode = async () => {
+    setIsRunning(true);
+    setOutput('Spawning isolated container...\nExecuting...');
+
+    try {
+      const response = await axios.post('http://localhost:5000/execute', {
+        code,
+        language
+      });
+      setOutput(response.data.output || 'Execution successful (No output)');
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        setOutput(error.response?.data?.message || 'A critical error occurred.');
+      } else if (error instanceof Error) {
+        setOutput(error.message);
+      } else {
+        setOutput('An unknown error occurred.');
+      }
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#000', color: '#fff', fontFamily: 'sans-serif' }}>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <div style={{ width: '60%', borderRight: '1px solid #333', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '10px', backgroundColor: '#252526', display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '16px' }}>Collab-IDE ({sessionId})</h3>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as string)}
+            style={{ padding: '4px', backgroundColor: '#333', color: '#fff', border: 'none' }}
+          >
+            <option value="javascript">JavaScript (Node.js)</option>
+            <option value="python">Python 3</option>
+            <option value="cpp">C++ (GCC)</option>
+          </select>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <div style={{ flexGrow: 1 }}>
+          <CollaborativeEditor
+            sessionId={sessionId}
+            language={language}
+            onCodeChange={setCode}
+          />
+        </div>
+      </div>
+
+      <div style={{ width: '40%', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e' }}>
+        <div style={{ padding: '10px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
+          <h3 style={{ margin: 0, fontSize: '16px' }}>Terminal Output</h3>
+          <button
+            onClick={handleRunCode}
+            disabled={isRunning}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: isRunning ? '#555' : '#007acc',
+              color: '#fff',
+              border: 'none',
+              cursor: isRunning ? 'wait' : 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            {isRunning ? 'Running...' : 'Run Code'}
+          </button>
+        </div>
+        <pre style={{ padding: '15px', margin: 0, flexGrow: 1, overflowY: 'auto', color: '#d4d4d4', whiteSpace: 'pre-wrap' }}>
+          {output}
+        </pre>
+      </div>
+
+    </div>
+  );
 }
-
-export default App
