@@ -6,8 +6,14 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import * as Y from 'yjs';
 import WebSocket from 'ws';
+import dotenv from 'dotenv';
+import connectDB from './database/connect';
 
 const { setupWSConnection } = require('y-websocket/bin/utils');
+
+dotenv.config({
+  quiet: true,
+})
 
 const app = express();
 app.use(cors());
@@ -76,6 +82,11 @@ io.on('connection', (socket: Socket) => {
   });
 });
 
-server.listen(port, () => {
-  console.log(`API & Synchronization Cluster listening on http://localhost:${port}`);
+server.listen(port, async () => {
+  try {
+    await connectDB(process.env.MONGO_URI as string);
+    console.log(`API & Synchronization Cluster listening on http://localhost:${port}`);
+  } catch (error) {
+    
+  }
 });
