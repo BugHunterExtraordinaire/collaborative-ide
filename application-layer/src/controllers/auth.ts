@@ -29,7 +29,22 @@ const loginUser: DefaultController = async (req, res) => {
 }
 
 const registerUser: DefaultController = async (req, res) => {
+  const { username, email, password, role } = req.body;
+  if (!username || !email || !password || !role ) throw new BadRequestError("Please provide all fields");
+
+  const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+  if (existingUser) throw new BadRequestError("User with that email or username already exists");
   
+  const user = await User.create({
+    username,
+    email,
+    password_hash: password,
+    role
+  });
+
+  res.status(201).json({
+    message: "User created successfully",
+  })
 }
 
 export {
