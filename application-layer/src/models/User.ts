@@ -1,9 +1,9 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose from "mongoose";
 import bcryptjs from 'bcryptjs';
 import { IUser } from "../types/mongoose/interfaces";
 import jwt , { JwtPayload } from "jsonwebtoken";
 
-const userSchema: Schema = new Schema({
+const userSchema: mongoose.Schema = new mongoose.Schema({
   username: { 
     type: String, 
     required: true, 

@@ -1,4 +1,4 @@
-import { Document } from "mongoose"
+import { DeepPartial, Document } from "mongoose"
 import jwt from "jsonwebtoken"
 
 interface IUser extends Document {
@@ -11,6 +11,14 @@ interface IUser extends Document {
   generateJWT(payload: jwt.JwtPayload): string;
 }
 
+interface ISession extends Document {
+  session_id: string;
+  state: Buffer; 
+  created_at: Date;
+  updated_at: Date;
+}
+
 export {
-  IUser
+  IUser,
+  ISession
 }
