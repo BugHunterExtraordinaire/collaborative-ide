@@ -9,8 +9,8 @@ import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import connectDB from './database/connect';
 import authRouter from './routes/auth';
-
-const { setupWSConnection } = require('y-websocket/bin/utils');
+import Session from './models/Session';
+const { setupWSConnection, getYDoc } = require('y-websocket/bin/utils');
 
 dotenv.config({
   quiet: true,
@@ -55,11 +55,43 @@ server.on('upgrade', (request, socket, head) => {
   }
 });
 
-wss.on('connection', (ws: WebSocket, req: any) => {
+wss.on('connection', async (ws: WebSocket, req: any) => {
   const docName = req.url.slice(5).split('?')[0]; 
   console.log(`CRDT connection established for session: ${docName}`);
   
   setupWSConnection(ws, req, { docName }); 
+
+  const ydoc = getYDoc(docName, false);
+
+  if (!(ydoc as any).hasDatabaseWired) {
+    (ydoc as any).hasDatabaseWired = true; 
+
+    try {
+      const session = await Session.findOne({ session_id: docName });
+      if (session && session.state) {
+        Y.applyUpdate(ydoc, new Uint8Array(session.state));
+        console.log(`Loaded historical state for session: ${docName}`);
+      } else {
+        console.log(`Created fresh session for: ${docName}`);
+      }
+
+      ydoc.on('update', async () => {
+        try {
+          const state = Buffer.from(Y.encodeStateAsUpdate(ydoc));
+          await Session.findOneAndUpdate(
+            { session_id: docName },
+            { state },
+            { upsert: true }
+          );
+        } catch (saveErr) {
+          console.error('Error saving keystroke:', saveErr);
+        }
+      });
+
+    } catch (loadErr) {
+      console.error('Error loading from MongoDB:', loadErr);
+    }
+  }
 });
 
 io.on('connection', (socket: Socket) => {
