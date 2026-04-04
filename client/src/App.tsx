@@ -3,6 +3,7 @@ import { type UserObject } from './types/interfaces';
 import axios from 'axios';
 import CollaborativeEditor from './components/CollaborativeEditor';
 import Login from './components/Login';
+import Chat from './components/Chat';
 
 export default function App() {
   const [user, setUser] = useState<UserObject | null>();
@@ -15,7 +16,6 @@ export default function App() {
 
   const sessionId = 'test-room-1'; 
 
-  // Check if we already logged in previously
   useEffect(() => {
     const savedToken = localStorage.getItem('ide_token');
     const savedUser = localStorage.getItem('ide_user');
@@ -62,16 +62,13 @@ export default function App() {
     }
   };
 
-  // If not logged in, show the Login screen
   if (!user || !token) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // If logged in, show the IDE
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#000', color: '#fff', fontFamily: 'sans-serif' }}>
       
-      {/* Left Panel: The Collaborative Editor */}
       <div style={{ width: '60%', borderRight: '1px solid #333', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '10px', backgroundColor: '#252526', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
@@ -102,28 +99,35 @@ export default function App() {
         </div>
       </div>
 
-      {/* Right Panel: Output & Controls */}
       <div style={{ width: '40%', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e' }}>
-        <div style={{ padding: '10px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
-          <h3 style={{ margin: 0, fontSize: '16px' }}>Terminal Output</h3>
-          <button 
-            onClick={handleRunCode} 
-            disabled={isRunning}
-            style={{ 
-              padding: '6px 16px', 
-              backgroundColor: isRunning ? '#555' : '#007acc', 
-              color: '#fff', 
-              border: 'none', 
-              cursor: isRunning ? 'wait' : 'normal',
-              fontWeight: 'bold'
-            }}
-          >
-            {isRunning ? 'Running...' : 'Run Code'}
-          </button>
+        
+        <div style={{ height: '50%', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '10px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>Terminal Output</h3>
+            <button 
+              onClick={handleRunCode} 
+              disabled={isRunning}
+              style={{ 
+                padding: '6px 16px', 
+                backgroundColor: isRunning ? '#555' : '#007acc', 
+                color: '#fff', 
+                border: 'none', 
+                cursor: isRunning ? 'wait' : 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              {isRunning ? 'Running...' : 'Run Code'}
+            </button>
+          </div>
+          <pre style={{ padding: '15px', margin: 0, flexGrow: 1, overflowY: 'auto', color: '#d4d4d4', whiteSpace: 'pre-wrap' }}>
+            {output}
+          </pre>
         </div>
-        <pre style={{ padding: '15px', margin: 0, flexGrow: 1, overflowY: 'auto', color: '#d4d4d4', whiteSpace: 'pre-wrap' }}>
-          {output}
-        </pre>
+
+        <div style={{ height: '50%', display: 'flex', flexDirection: 'column' }}>
+          <Chat sessionId={sessionId} username={user.username} />
+        </div>
+
       </div>
 
     </div>

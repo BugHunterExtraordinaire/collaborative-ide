@@ -1,0 +1,87 @@
+import { useState, useEffect, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
+import type { ChatProps, Message } from '../types/interfaces';
+
+export default function Chat({ sessionId, username }: ChatProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const socketRef = useRef<Socket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    socketRef.current = io('http://localhost:4000');
+
+    socketRef.current.emit('join-session', sessionId, username);
+
+    socketRef.current.on('user-joined', (data: { username: string }) => {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        username: 'System',
+        text: `${data.username} joined the session.`,
+        timestamp: new Date().toISOString(),
+        isSystem: true
+      }]);
+    });
+
+    socketRef.current.on('receive-message', (data: { username: string, message: string, timestamp: string }) => {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString() + Math.random(),
+        username: data.username,
+        text: data.message,
+        timestamp: data.timestamp
+      }]);
+    });
+
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, [sessionId, username]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || !socketRef.current) return;
+
+    socketRef.current.emit('send-message', {
+      sessionId,
+      message: input,
+      username
+    });
+    setInput('');
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e', borderTop: '1px solid #333' }}>
+      <div style={{ padding: '8px', backgroundColor: '#252526', borderBottom: '1px solid #333', fontSize: '14px', fontWeight: 'bold' }}>
+        Session Chat
+      </div>
+      
+      <div style={{ flexGrow: 1, overflowY: 'auto', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {messages.map((msg) => (
+          <div key={msg.id} style={{ fontSize: '13px', color: msg.isSystem ? '#888' : '#ddd' }}>
+            <span style={{ fontWeight: 'bold', color: msg.isSystem ? '#888' : msg.username === username ? '#4caf50' : '#007acc' }}>
+              {msg.username}: 
+            </span> {msg.text}
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <form onSubmit={sendMessage} style={{ display: 'flex', padding: '10px', borderTop: '1px solid #333' }}>
+        <input 
+          type="text" 
+          value={input} 
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+          style={{ flexGrow: 1, padding: '8px', backgroundColor: '#333', border: 'none', color: '#fff', borderRadius: '4px 0 0 4px', outline: 'none' }}
+        />
+        <button type="submit" style={{ padding: '8px 12px', backgroundColor: '#007acc', border: 'none', color: '#fff', borderRadius: '0 4px 4px 0', cursor: 'pointer', fontWeight: 'bold' }}>
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
