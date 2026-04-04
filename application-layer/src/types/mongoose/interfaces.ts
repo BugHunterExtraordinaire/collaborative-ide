@@ -13,7 +13,8 @@ interface IUser extends Document {
 
 interface ISession extends Document {
   session_id: string;
-  state: Buffer; 
+  state: Buffer;
+  chat_history: Array<{ username: string; message: string; timestamp: Date }>;
   created_at: Date;
   updated_at: Date;
 }
