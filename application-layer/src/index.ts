@@ -97,19 +97,43 @@ wss.on('connection', async (ws: WebSocket, req: any) => {
 io.on('connection', (socket: Socket) => {
   console.log(`Client connected: ${socket.id}`);
 
-  socket.on('join-session', (sessionId: string, username: string) => {
+  socket.on('join-session', async (sessionId: string, username: string) => {
     socket.join(sessionId);
     console.log(`User '${username}' joined session: ${sessionId}`);
     
+    try {
+      const session = await Session.findOne({ session_id: sessionId });
+      if (session && session.chat_history) {
+        socket.emit('chat-history', session.chat_history);
+      }
+    } catch (err) {
+      console.error('Error loading chat history:', err);
+    }
+
     socket.to(sessionId).emit('user-joined', { username, socketId: socket.id });
   });
 
-  socket.on('send-message', (data: { sessionId: string, message: string, username: string }) => {
+  socket.on('send-message', async (data: { sessionId: string, message: string, username: string }) => {
+    const timestamp = new Date().toISOString();
+    
     io.to(data.sessionId).emit('receive-message', {
       username: data.username,
       message: data.message,
-      timestamp: new Date().toISOString()
+      timestamp
     });
+
+    try {
+      await Session.findOneAndUpdate(
+        { session_id: data.sessionId },
+        { 
+          $push: { chat_history: { username: data.username, message: data.message, timestamp } },
+          $set: { updated_at: new Date() }
+        },
+        { upsert: true }
+      );
+    } catch (err) {
+      console.error('Error saving chat message:', err);
+    }
   });
 
   socket.on('disconnect', () => {
