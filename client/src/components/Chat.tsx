@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import type { ChatProps, Message } from '../types/interfaces';
+import { type ChatHistoryArray } from '../types/arrays';
 
 export default function Chat({ sessionId, username }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -12,6 +13,16 @@ export default function Chat({ sessionId, username }: ChatProps) {
     socketRef.current = io('http://localhost:4000');
 
     socketRef.current.emit('join-session', sessionId, username);
+
+    socketRef.current.on('chat-history', (history: ChatHistoryArray) => {
+      const formattedHistory = history.map((msg, index) => ({
+        id: `history-${index}-${Date.now()}`,
+        username: msg.username,
+        text: msg.message,
+        timestamp: msg.timestamp.toString()
+      }));
+      setMessages(formattedHistory);
+    });
 
     socketRef.current.on('user-joined', (data: { username: string }) => {
       setMessages(prev => [...prev, {

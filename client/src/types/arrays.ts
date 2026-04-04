@@ -1,0 +1,1 @@
+export type ChatHistoryArray = Array<{ username: string; message: string; timestamp: Date }>;
