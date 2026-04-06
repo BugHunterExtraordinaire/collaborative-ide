@@ -8,22 +8,27 @@ import { MonacoBinding } from 'y-monaco';
 interface CollaborativeEditorProps {
   sessionId: string;
   language: string;
+  currentUser: { username: string; role: string };
   onCodeChange: (code: string) => void;
 }
 
-export default function CollaborativeEditor({ sessionId, language, onCodeChange }: CollaborativeEditorProps) {
+export default function CollaborativeEditor({ sessionId, language, currentUser, onCodeChange }: CollaborativeEditorProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  
+  const decorationsCollectionRef = useRef<editor.IEditorDecorationsCollection | null>(null);
   const [status, setStatus] = useState<string>('Connecting...');
 
-  const handleEditorDidMount: OnMount = (editor) => {
-    editorRef.current = editor;
+  const handleEditorDidMount: OnMount = (editorInstance, monaco) => {
+    editorRef.current = editorInstance;
+    decorationsCollectionRef.current = editorInstance.createDecorationsCollection([]);
 
     const ydoc = new Y.Doc();
     const ytext = ydoc.getText('monaco');
+    const yAuthorship = ydoc.getMap<string>('authorship'); 
 
     const provider = new WebsocketProvider(
-      'ws://localhost:4000/yjs',
-      sessionId,
+      'ws://localhost:4000/yjs', 
+      sessionId, 
       ydoc
     );
 
@@ -31,20 +36,70 @@ export default function CollaborativeEditor({ sessionId, language, onCodeChange 
       setStatus(event.status === 'connected' ? 'Connected (Synced)' : 'Disconnected');
     });
 
-    const editorModel = editorRef.current.getModel();
+    provider.awareness.setLocalStateField('user', {
+      name: currentUser.username,
+      color: currentUser.role === 'Instructor' ? '#ffeb3b' : '#007acc'
+    });
+
+    const editorModel = editorInstance.getModel();
     if (editorModel) {
-      new MonacoBinding(ytext, editorModel, new Set([editorRef.current]), provider.awareness);
+      new MonacoBinding(ytext, editorModel, new Set([editorInstance]), provider.awareness);
     }
 
-    editor.onDidChangeModelContent(() => {
-      onCodeChange(editor.getValue());
+    const updateDecorations = () => {
+      if (!editorModel || !decorationsCollectionRef.current) return;
+      const newDecorations: editor.IModelDeltaDecoration[] = [];
+      
+      yAuthorship.forEach((authorName, lineNumberStr) => {
+        const lineNum = parseInt(lineNumberStr);
+        if (lineNum <= editorModel.getLineCount()) {
+          newDecorations.push({
+            range: new monaco.Range(lineNum, 1, lineNum, 1),
+            options: {
+              isWholeLine: true,
+              hoverMessage: { value: `📝 Written by: **${authorName}**` }
+            }
+          });
+        }
+      });
+      decorationsCollectionRef.current.set(newDecorations);
+    };
+
+    yAuthorship.observe(() => updateDecorations());
+    provider.on('sync', (isSynced: boolean) => {
+      if (isSynced) updateDecorations();
+    });
+
+    let isRemoteUpdate = false;
+
+    ytext.observe((event, transaction) => {
+      if (!transaction.local) {
+        isRemoteUpdate = true;
+      }
+    });
+
+    editorInstance.onDidChangeModelContent((e) => {
+      onCodeChange(editorInstance.getValue());
+
+      if (isRemoteUpdate) {
+        isRemoteUpdate = false;
+        return;
+      }
+
+      e.changes.forEach(change => {
+        const startLine = change.range.startLineNumber;
+        const endLine = change.range.endLineNumber;
+        for (let i = startLine; i <= endLine; i++) {
+          yAuthorship.set(i.toString(), currentUser.username);
+        }
+      });
     });
   };
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '8px', backgroundColor: '#1e1e1e', color: '#4caf50', fontSize: '12px', fontFamily: 'monospace' }}>
-        Status: {status}
+        Status: {status} | Role: {currentUser.role}
       </div>
       <Editor
         height="100%"
