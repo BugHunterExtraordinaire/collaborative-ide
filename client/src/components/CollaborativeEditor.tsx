@@ -4,15 +4,9 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
+import { type CollaborativeEditorProps } from '../types/interfaces';
 
-interface CollaborativeEditorProps {
-  sessionId: string;
-  language: string;
-  currentUser: { username: string; role: string };
-  onCodeChange: (code: string) => void;
-}
-
-export default function CollaborativeEditor({ sessionId, language, currentUser, onCodeChange }: CollaborativeEditorProps) {
+export default function CollaborativeEditor({ currentRoom, language, currentUser, onCodeChange }: CollaborativeEditorProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   
   const decorationsCollectionRef = useRef<editor.IEditorDecorationsCollection | null>(null);
@@ -28,7 +22,7 @@ export default function CollaborativeEditor({ sessionId, language, currentUser, 
 
     const provider = new WebsocketProvider(
       'ws://localhost:4000/yjs', 
-      sessionId, 
+      currentRoom, 
       ydoc
     );
 
@@ -72,7 +66,7 @@ export default function CollaborativeEditor({ sessionId, language, currentUser, 
 
     let isRemoteUpdate = false;
 
-    ytext.observe((event, transaction) => {
+    ytext.observe((_, transaction) => {
       if (!transaction.local) {
         isRemoteUpdate = true;
       }

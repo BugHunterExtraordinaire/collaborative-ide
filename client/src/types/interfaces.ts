@@ -8,7 +8,7 @@ export interface LoginProps {
 }
 
 export interface ChatProps {
-  sessionId: string;
+  currentRoom: string;
   username: string;
 }
 
@@ -18,4 +18,17 @@ export interface Message {
   text: string;
   timestamp: string;
   isSystem?: boolean;
+}
+
+export interface DashboardProps {
+  user: { username: string; role: string };
+  onJoinRoom: (sessionId: string) => void;
+  onLogout: () => void;
+}
+
+export interface CollaborativeEditorProps {
+  currentRoom: string;
+  language: string;
+  currentUser: { username: string; role: string };
+  onCodeChange: (code: string) => void;
 }

@@ -3,13 +3,14 @@ import axios from 'axios';
 import CollaborativeEditor from './components/CollaborativeEditor';
 import Login from './components/Login';
 import Chat from './components/Chat';
+import Dashboard from './components/Dashboard';
 import Editor from '@monaco-editor/react';
 import type { UserObject } from './types/interfaces';
 
 export default function App() {
   const [user, setUser] = useState<UserObject | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  
+
   const [code, setCode] = useState<string>('');
   const [output, setOutput] = useState<string>('System Ready. Awaiting execution...');
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -19,7 +20,7 @@ export default function App() {
   const [isPlaybackMode, setIsPlaybackMode] = useState<boolean>(false);
   const [playbackIndex, setPlaybackIndex] = useState<number>(0);
 
-  const sessionId = 'test-room-1'; 
+  const [currentRoom, setCurrentRoom] = useState<string | null>(null);
 
   useEffect(() => {
     const savedToken = sessionStorage.getItem('ide_token');
@@ -75,15 +76,19 @@ export default function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
+  if (!currentRoom) {
+    return <Dashboard user={user} onJoinRoom={setCurrentRoom} onLogout={handleLogout} />;
+  }
+
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#000', color: '#fff', fontFamily: 'sans-serif' }}>
-      
+
       <div style={{ width: '60%', borderRight: '1px solid #333', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '10px', backgroundColor: '#252526', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '16px' }}>Collab-IDE ({sessionId})</h3>
-            <select 
-              value={language} 
+            <h3 style={{ margin: 0, fontSize: '16px' }}>Collab-IDE ({currentRoom})</h3>
+            <select
+              value={language}
               onChange={(e) => setLanguage(e.target.value as string)}
               style={{ padding: '4px', backgroundColor: '#333', color: '#fff', border: 'none' }}
               disabled={isPlaybackMode}
@@ -93,9 +98,9 @@ export default function App() {
               <option value="cpp">C++</option>
             </select>
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button 
+            <button
               onClick={() => {
                 setIsPlaybackMode(!isPlaybackMode);
                 setPlaybackIndex(Math.max(0, history.length - 1));
@@ -105,26 +110,30 @@ export default function App() {
               {isPlaybackMode ? 'Exit Playback' : '⏪ Playback Mode'}
             </button>
             <span style={{ color: '#4caf50', fontSize: '12px' }}>{user.username} ({user.role})</span>
-            <button onClick={handleLogout} style={{ padding: '4px 8px', backgroundColor: '#d32f2f', color: '#fff', border: 'none', cursor: 'pointer' }}>Logout</button>
+            <button
+              onClick={() => setCurrentRoom(null)}
+              style={{ padding: '4px 8px', backgroundColor: '#555', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
+              Leave Room
+            </button>
           </div>
         </div>
 
         {isPlaybackMode && history.length > 0 && (
           <div style={{ padding: '15px', backgroundColor: '#1e1e1e', borderBottom: '1px solid #333' }}>
-            <input 
-              type="range" 
-              min="0" 
-              max={history.length - 1} 
-              value={playbackIndex} 
-              onChange={(e) => setPlaybackIndex(Number(e.target.value))} 
-              style={{ width: '100%', cursor: 'pointer' }} 
+            <input
+              type="range"
+              min="0"
+              max={history.length - 1}
+              value={playbackIndex}
+              onChange={(e) => setPlaybackIndex(Number(e.target.value))}
+              style={{ width: '100%', cursor: 'pointer' }}
             />
             <div style={{ textAlign: 'center', fontSize: '13px', marginTop: '8px', color: '#aaa' }}>
               Viewing Snapshot: <strong style={{ color: '#fff' }}>{history[playbackIndex].time}</strong>
             </div>
           </div>
         )}
-        
+
         <div style={{ flexGrow: 1 }}>
           {isPlaybackMode ? (
             <Editor
@@ -135,11 +144,11 @@ export default function App() {
               options={{ readOnly: true, minimap: { enabled: false }, fontSize: 14 }}
             />
           ) : (
-            <CollaborativeEditor 
-              sessionId={sessionId} 
+            <CollaborativeEditor
+              currentRoom={currentRoom}
               language={language}
               currentUser={user}
-              onCodeChange={setCode} 
+              onCodeChange={setCode}
             />
           )}
         </div>
@@ -156,7 +165,7 @@ export default function App() {
           <pre style={{ padding: '15px', margin: 0, flexGrow: 1, overflowY: 'auto', color: '#d4d4d4', whiteSpace: 'pre-wrap' }}>{output}</pre>
         </div>
         <div style={{ height: '50%', display: 'flex', flexDirection: 'column' }}>
-          <Chat sessionId={sessionId} username={user.username} />
+          <Chat currentRoom={currentRoom} username={user.username} />
         </div>
       </div>
 

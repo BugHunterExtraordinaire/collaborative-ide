@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import type { ChatProps, Message } from '../types/interfaces';
 import { type ChatHistoryArray } from '../types/arrays';
 
-export default function Chat({ sessionId, username }: ChatProps) {
+export default function Chat({ currentRoom, username }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const socketRef = useRef<Socket | null>(null);
@@ -12,7 +12,7 @@ export default function Chat({ sessionId, username }: ChatProps) {
   useEffect(() => {
     socketRef.current = io('http://localhost:4000');
 
-    socketRef.current.emit('join-session', sessionId, username);
+    socketRef.current.emit('join-session', currentRoom, username);
 
     socketRef.current.on('chat-history', (history: ChatHistoryArray) => {
       const formattedHistory = history.map((msg, index) => ({
@@ -46,7 +46,7 @@ export default function Chat({ sessionId, username }: ChatProps) {
     return () => {
       socketRef.current?.disconnect();
     };
-  }, [sessionId, username]);
+  }, [currentRoom, username]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -57,7 +57,7 @@ export default function Chat({ sessionId, username }: ChatProps) {
     if (!input.trim() || !socketRef.current) return;
 
     socketRef.current.emit('send-message', {
-      sessionId,
+      currentRoom,
       message: input,
       username
     });
