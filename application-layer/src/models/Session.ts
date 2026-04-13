@@ -7,6 +7,10 @@ const sessionSchema: mongoose.Schema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  name: {
+    type: String,
+    required: true
+  },
   state: {
     type: Buffer,
   },

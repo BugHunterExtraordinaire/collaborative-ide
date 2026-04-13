@@ -9,6 +9,7 @@ import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import connectDB from './database/connect';
 import authRouter from './routes/auth';
+import sessionRouter from './routes/session';
 import Session from './models/Session';
 const { setupWSConnection, getYDoc } = require('y-websocket/bin/utils');
 
@@ -21,6 +22,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRouter);
+app.use('/api/sessions', sessionRouter);
 
 const port = process.env.PORT || 4000;
 
