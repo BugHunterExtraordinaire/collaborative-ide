@@ -8,16 +8,18 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
   const [newRoomName, setNewRoomName] = useState('');
   const [joinId, setJoinId] = useState('');
 
+  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+  
   useEffect(() => {
-    axios.get('http://localhost:4000/api/sessions')
+    axios.get(`http://localhost:${backendPort}/api/sessions`)
       .then(res => setSessions(res.data))
       .catch(err => console.error('Failed to load sessions', err));
-  }, []);
+  }, [backendPort]);
 
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:4000/api/sessions', {
+      const res = await axios.post(`http://localhost:${backendPort}/api/sessions`, {
         name: newRoomName
       });
       onJoinRoom(res.data.session_id);

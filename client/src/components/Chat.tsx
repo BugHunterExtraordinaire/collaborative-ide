@@ -9,8 +9,10 @@ export default function Chat({ currentRoom, username }: ChatProps) {
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+
   useEffect(() => {
-    socketRef.current = io('http://localhost:4000');
+    socketRef.current = io(`http://localhost:${backendPort}`);
 
     socketRef.current.emit('join-session', currentRoom, username);
 
@@ -46,7 +48,7 @@ export default function Chat({ currentRoom, username }: ChatProps) {
     return () => {
       socketRef.current?.disconnect();
     };
-  }, [currentRoom, username]);
+  }, [currentRoom, username, backendPort]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

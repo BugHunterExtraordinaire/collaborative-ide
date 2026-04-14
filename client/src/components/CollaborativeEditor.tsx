@@ -18,10 +18,12 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
 
     const ydoc = new Y.Doc();
     const ytext = ydoc.getText('monaco');
-    const yAuthorship = ydoc.getMap<string>('authorship'); 
+    const yAuthorship = ydoc.getMap<string>('authorship');
+
+    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
 
     const provider = new WebsocketProvider(
-      'ws://localhost:4000/yjs', 
+      `ws://localhost:${backendPort}/yjs`, 
       currentRoom, 
       ydoc
     );

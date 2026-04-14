@@ -7,10 +7,15 @@ import { createClient } from 'redis';
 import * as Y from 'yjs';
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
+
 import connectDB from './database/connect';
+
 import authRouter from './routes/auth';
 import sessionRouter from './routes/session';
+
 import Session from './models/Session';
+import OperationLog from './models/OperationLog';
+
 const { setupWSConnection, getYDoc } = require('y-websocket/bin/utils');
 
 dotenv.config({
@@ -57,6 +62,18 @@ server.on('upgrade', (request, socket, head) => {
   }
 });
 
+subClient.subscribe('yjs-updates', (message) => {
+  try {
+    const { sessionId, updateArray } = JSON.parse(message);
+    const ydoc = getYDoc(sessionId, false);
+    
+    const updateBuffer = new Uint8Array(updateArray);
+    Y.applyUpdate(ydoc, updateBuffer, 'redis'); 
+  } catch (err) {
+    console.error('Error applying Redis Yjs update:', err);
+  }
+});
+
 wss.on('connection', async (ws: WebSocket, req: any) => {
   const docName = req.url.slice(5).split('?')[0]; 
   console.log(`CRDT connection established for session: ${docName}`);
@@ -73,20 +90,35 @@ wss.on('connection', async (ws: WebSocket, req: any) => {
       if (session && session.state) {
         Y.applyUpdate(ydoc, new Uint8Array(session.state));
         console.log(`Loaded historical state for session: ${docName}`);
-      } else {
-        console.log(`Created fresh session for: ${docName}`);
       }
+      
+      ydoc.on('update', async (update: Uint8Array, origin: any) => {
+        const updateDeltaBuffer = Buffer.from(update);
+        
+        const fullStateBuffer = Buffer.from(Y.encodeStateAsUpdate(ydoc));
 
-      ydoc.on('update', async () => {
+        if (origin !== 'redis') {
+          const payload = JSON.stringify({ 
+            sessionId: docName, 
+            updateArray: Array.from(update) 
+          });
+          pubClient.publish('yjs-updates', payload);
+        }
+
         try {
-          const state = Buffer.from(Y.encodeStateAsUpdate(ydoc));
           await Session.findOneAndUpdate(
             { session_id: docName },
-            { state },
+            { state: fullStateBuffer },
             { upsert: true }
           );
+
+          await OperationLog.create({
+            session_id: docName,
+            operation_data: updateDeltaBuffer
+          });
+
         } catch (saveErr) {
-          console.error('Error saving keystroke:', saveErr);
+          console.error('Error saving keystroke to MongoDB:', saveErr);
         }
       });
 

@@ -10,19 +10,21 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [role, setRole] = useState('Student');
   const [error, setError] = useState('');
 
+  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     try {
       if (isRegistering) {
-        await axios.post('http://localhost:4000/api/auth/register', {
+        await axios.post(`http://localhost:${backendPort}/api/auth/register`, {
           username, email, password, role
         });
-        const loginRes = await axios.post('http://localhost:4000/api/auth/login', { email, password });
+        const loginRes = await axios.post(`http://localhost:${backendPort}/api/auth/login`, { email, password });
         onLoginSuccess(loginRes.data.user, loginRes.data.token);
       } else {
-        const loginRes = await axios.post('http://localhost:4000/api/auth/login', { email, password });
+        const loginRes = await axios.post(`http://localhost:${backendPort}/api/auth/login`, { email, password });
         onLoginSuccess(loginRes.data.user, loginRes.data.token);
       }
     } catch (err) {

@@ -20,7 +20,14 @@ interface ISession extends Document {
   updated_at: Date;
 }
 
+interface IOperationLog extends Document {
+  session_id: string;
+  timestamp: Date;
+  operation_data: Buffer;
+}
+
 export {
   IUser,
-  ISession
+  ISession,
+  IOperationLog
 }
