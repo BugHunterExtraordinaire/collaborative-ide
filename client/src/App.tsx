@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as Y from 'yjs';
 import axios from 'axios';
 import CollaborativeEditor from './components/CollaborativeEditor';
 import Login from './components/Login';
@@ -16,7 +17,8 @@ export default function App() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [language, setLanguage] = useState('javascript');
 
-  const [history, setHistory] = useState<{ time: string; code: string }[]>([]);
+  const [historyLogs, setHistoryLogs] = useState<any[]>([]);
+  const [playbackCode, setPlaybackCode] = useState<string>('Loading history...');
   const [isPlaybackMode, setIsPlaybackMode] = useState<boolean>(false);
   const [playbackIndex, setPlaybackIndex] = useState<number>(0);
 
@@ -32,18 +34,37 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!code) return;
+    if (isPlaybackMode && currentRoom) {
+      const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+      
+      axios.get(`http://localhost:${backendPort}/api/sessions/${currentRoom}/history`)
+        .then(res => {
+          setHistoryLogs(res.data);
+          setPlaybackIndex(Math.max(0, res.data.length - 1));
+        })
+        .catch(err => {
+          console.error("Failed to fetch history:", err);
+          setPlaybackCode("Error loading history.");
+        });
+    }
+  }, [isPlaybackMode, currentRoom]);
 
-    const timer = setTimeout(() => {
-      setHistory((prev) => {
-        const lastEntry = prev[prev.length - 1];
-        if (lastEntry?.code === code) return prev;
-        return [...prev, { time: new Date().toLocaleTimeString(), code }];
-      });
-    }, 1000);
+  useEffect(() => {
+    if (!isPlaybackMode || historyLogs.length === 0) return;
 
-    return () => clearTimeout(timer);
-  }, [code]);
+    const tempDoc = new Y.Doc();
+    const tempText = tempDoc.getText('monaco');
+
+    for (let i = 0; i <= playbackIndex; i++) {
+      const log = historyLogs[i];
+      if (log && log.operation_data && log.operation_data.data) {
+        const updateBuffer = new Uint8Array(log.operation_data.data);
+        Y.applyUpdate(tempDoc, updateBuffer);
+      }
+    }
+
+    setPlaybackCode(tempText.toString());
+  }, [playbackIndex, historyLogs, isPlaybackMode]);
 
   const handleLoginSuccess = (userData: UserObject, jwt: string) => {
     setUser(userData);
@@ -103,7 +124,7 @@ export default function App() {
             <button
               onClick={() => {
                 setIsPlaybackMode(!isPlaybackMode);
-                setPlaybackIndex(Math.max(0, history.length - 1));
+                setPlaybackIndex(Math.max(0, historyLogs.length - 1)); 
               }}
               style={{ padding: '4px 10px', backgroundColor: isPlaybackMode ? '#ff9800' : '#4caf50', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
             >
@@ -118,18 +139,20 @@ export default function App() {
           </div>
         </div>
 
-        {isPlaybackMode && history.length > 0 && (
+        {isPlaybackMode && historyLogs.length > 0 && (
           <div style={{ padding: '15px', backgroundColor: '#1e1e1e', borderBottom: '1px solid #333' }}>
             <input
               type="range"
               min="0"
-              max={history.length - 1}
+              max={historyLogs.length - 1}
               value={playbackIndex}
               onChange={(e) => setPlaybackIndex(Number(e.target.value))}
               style={{ width: '100%', cursor: 'pointer' }}
             />
             <div style={{ textAlign: 'center', fontSize: '13px', marginTop: '8px', color: '#aaa' }}>
-              Viewing Snapshot: <strong style={{ color: '#fff' }}>{history[playbackIndex].time}</strong>
+              Viewing Snapshot: <strong style={{ color: '#fff' }}>
+                {new Date(historyLogs[playbackIndex].timestamp).toLocaleTimeString()}
+              </strong>
             </div>
           </div>
         )}
@@ -140,7 +163,7 @@ export default function App() {
               height="100%"
               theme="vs-dark"
               language={language}
-              value={history.length > 0 ? history[playbackIndex].code : 'No history recorded yet.'}
+              value={playbackCode} 
               options={{ readOnly: true, minimap: { enabled: false }, fontSize: 14 }}
             />
           ) : (

@@ -59,7 +59,7 @@ export default function Chat({ currentRoom, username }: ChatProps) {
     if (!input.trim() || !socketRef.current) return;
 
     socketRef.current.emit('send-message', {
-      currentRoom,
+      sessionId: currentRoom,
       message: input,
       username
     });
