@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { io, Socket } from 'socket.io-client';
+import { useState, useEffect, useRef } from 'react';
 import * as Y from 'yjs';
 import axios from 'axios';
 import CollaborativeEditor from './components/CollaborativeEditor';
@@ -23,6 +24,25 @@ export default function App() {
   const [playbackIndex, setPlaybackIndex] = useState<number>(0);
 
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
+
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    if (currentRoom && user) {
+      const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+      socketRef.current = io(`http://localhost:${backendPort}`);
+
+      socketRef.current.emit('join-session', currentRoom, user.username);
+
+      socketRef.current.on('receive-execution', (broadcastOutput: string) => {
+        setOutput(broadcastOutput);
+      });
+
+      return () => {
+        socketRef.current?.disconnect();
+      };
+    }
+  }, [currentRoom, user]);
 
   useEffect(() => {
     const savedToken = sessionStorage.getItem('ide_token');
@@ -85,9 +105,26 @@ export default function App() {
     setOutput('Spawning isolated container...\nExecuting...');
     try {
       const response = await axios.post('http://localhost:5000/execute', { code, language });
-      setOutput(response.data.output || 'Execution successful (No output)');
+      const resultOutput = response.data.output || 'Execution successful (No output)';
+      setOutput(resultOutput);
+
+      if (user?.role === 'Instructor' && socketRef.current) {
+        socketRef.current.emit('instructor-execution', {
+          sessionId: currentRoom,
+          output: `[Instructor Broadcast]:\n${resultOutput}`
+        });
+      }
     } catch (error: unknown) {
-      if (axios.isAxiosError(error)) setOutput(error.response?.data?.message || 'Error');
+      const errorMsg = axios.isAxiosError(error) ? (error.response?.data?.message || 'Error') : 'Error';
+      setOutput(errorMsg);
+
+      // RBAC: Broadcast the error if the Instructor's code crashed
+      if (user?.role === 'Instructor' && socketRef.current) {
+        socketRef.current.emit('instructor-execution', {
+          sessionId: currentRoom,
+          output: `[Instructor Broadcast Failed]:\n${errorMsg}`
+        });
+      }
     } finally {
       setIsRunning(false);
     }
@@ -188,7 +225,7 @@ export default function App() {
           <pre style={{ padding: '15px', margin: 0, flexGrow: 1, overflowY: 'auto', color: '#d4d4d4', whiteSpace: 'pre-wrap' }}>{output}</pre>
         </div>
         <div style={{ height: '50%', display: 'flex', flexDirection: 'column' }}>
-          <Chat currentRoom={currentRoom} username={user.username} />
+          <Chat currentRoom={currentRoom} username={user.username} socket={socketRef.current} />
         </div>
       </div>
 
