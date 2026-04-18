@@ -1,3 +1,5 @@
+import { Socket } from 'socket.io-client';
+
 export interface UserObject {
   username: string;
   role: string;
@@ -10,6 +12,7 @@ export interface LoginProps {
 export interface ChatProps {
   currentRoom: string;
   username: string;
+  socket: Socket | null;
 }
 
 export interface Message {

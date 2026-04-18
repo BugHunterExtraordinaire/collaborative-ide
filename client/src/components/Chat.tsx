@@ -1,22 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
 import type { ChatProps, Message } from '../types/interfaces';
 import { type ChatHistoryArray } from '../types/arrays';
 
-export default function Chat({ currentRoom, username }: ChatProps) {
+export default function Chat({ currentRoom, username, socket }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-
   useEffect(() => {
-    socketRef.current = io(`http://localhost:${backendPort}`);
+    if (!socket) return;
 
-    socketRef.current.emit('join-session', currentRoom, username);
-
-    socketRef.current.on('chat-history', (history: ChatHistoryArray) => {
+    socket.on('chat-history', (history: ChatHistoryArray) => {
       const formattedHistory = history.map((msg, index) => ({
         id: `history-${index}-${Date.now()}`,
         username: msg.username,
@@ -26,9 +20,9 @@ export default function Chat({ currentRoom, username }: ChatProps) {
       setMessages(formattedHistory);
     });
 
-    socketRef.current.on('user-joined', (data: { username: string }) => {
+    socket.on('user-joined', (data: { username: string }) => {
       setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: Date.now().toString() + Math.random(),
         username: 'System',
         text: `${data.username} joined the session.`,
         timestamp: new Date().toISOString(),
@@ -36,7 +30,7 @@ export default function Chat({ currentRoom, username }: ChatProps) {
       }]);
     });
 
-    socketRef.current.on('receive-message', (data: { username: string, message: string, timestamp: string }) => {
+    socket.on('receive-message', (data: { username: string, message: string, timestamp: string }) => {
       setMessages(prev => [...prev, {
         id: Date.now().toString() + Math.random(),
         username: data.username,
@@ -46,9 +40,11 @@ export default function Chat({ currentRoom, username }: ChatProps) {
     });
 
     return () => {
-      socketRef.current?.disconnect();
+      socket.off('chat-history');
+      socket.off('user-joined');
+      socket.off('receive-message');
     };
-  }, [currentRoom, username, backendPort]);
+  }, [socket]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,9 +52,9 @@ export default function Chat({ currentRoom, username }: ChatProps) {
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !socketRef.current) return;
+    if (!input.trim() || !socket) return;
 
-    socketRef.current.emit('send-message', {
+    socket.emit('send-message', {
       sessionId: currentRoom,
       message: input,
       username

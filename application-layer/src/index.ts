@@ -147,6 +147,10 @@ io.on('connection', (socket: Socket) => {
     socket.to(sessionId).emit('user-joined', { username, socketId: socket.id });
   });
 
+  socket.on('instructor-execution', (data: { sessionId: string, output: string }) => {
+    socket.to(data.sessionId).emit('receive-execution', data.output);
+  });
+
   socket.on('send-message', async (data: { sessionId: string, message: string, username: string }) => {
     const timestamp = new Date().toISOString();
     
