@@ -51,7 +51,6 @@ Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
 });
 
 const wss = new WebSocket.Server({ noServer: true });
-const docInitializationLocks = new Map<string, Promise<void>>();
 
 server.on('upgrade', (request, socket, head) => {
   const pathname = request.url;
@@ -75,7 +74,7 @@ subClient.subscribe('yjs-updates', (message) => {
   }
 });
 
-wss.on('connection', async (ws: WebSocket, req: any) => {
+wss.on('connection', (ws: WebSocket, req: any) => {
   const docName = req.url.slice(5).split('?')[0]; 
   console.log(`CRDT connection established for session: ${docName}`);
   
@@ -84,51 +83,42 @@ wss.on('connection', async (ws: WebSocket, req: any) => {
   if (!(ydoc as any).hasDatabaseWired) {
     (ydoc as any).hasDatabaseWired = true; 
 
-    const initPromise = (async () => {
-      try {
-        const session = await Session.findOne({ session_id: docName });
-        if (session && session.state) {
-          Y.applyUpdate(ydoc, new Uint8Array(session.state));
-          console.log(`Loaded historical state for session: ${docName}`);
-        }
-        
-        ydoc.on('update', async (update: Uint8Array, origin: any) => {
-          const updateDeltaBuffer = Buffer.from(update);
-          const fullStateBuffer = Buffer.from(Y.encodeStateAsUpdate(ydoc));
+    ydoc.on('update', async (update: Uint8Array, origin: any) => {
+      const updateDeltaBuffer = Buffer.from(update);
+      const fullStateBuffer = Buffer.from(Y.encodeStateAsUpdate(ydoc));
 
-          if (origin !== 'redis') {
-            const payload = JSON.stringify({ 
-              sessionId: docName, 
-              updateArray: Array.from(update) 
-            });
-            pubClient.publish('yjs-updates', payload);
-          }
-
-          try {
-            await Session.findOneAndUpdate(
-              { session_id: docName },
-              { state: fullStateBuffer },
-              { upsert: true }
-            );
-
-            await OperationLog.create({
-              session_id: docName,
-              operation_data: updateDeltaBuffer
-            });
-          } catch (saveErr) {
-            console.error('Error saving keystroke to MongoDB:', saveErr);
-          }
+      if (origin !== 'redis' && origin !== 'db-load') {
+        const payload = JSON.stringify({ 
+          sessionId: docName, 
+          updateArray: Array.from(update) 
         });
-      } catch (loadErr) {
-        console.error('Error loading from MongoDB:', loadErr);
+        pubClient.publish('yjs-updates', payload);
       }
-    })();
+      
+      if (origin !== 'db-load') {
+        try {
+          await Session.findOneAndUpdate(
+            { session_id: docName },
+            { state: fullStateBuffer },
+            { upsert: true }
+          );
 
-    docInitializationLocks.set(docName, initPromise);
-  }
+          await OperationLog.create({
+            session_id: docName,
+            operation_data: updateDeltaBuffer
+          });
+        } catch (saveErr) {
+          console.error('Error saving keystroke to MongoDB:', saveErr);
+        }
+      }
+    });
 
-  if (docInitializationLocks.has(docName)) {
-    await docInitializationLocks.get(docName);
+    Session.findOne({ session_id: docName }).then(session => {
+      if (session && session.state) {
+        Y.applyUpdate(ydoc, new Uint8Array(session.state), 'db-load');
+        console.log(`Loaded historical state for session: ${docName}`);
+      }
+    }).catch(err => console.error('Error loading from MongoDB:', err));
   }
 
   setupWSConnection(ws, req, { docName }); 
