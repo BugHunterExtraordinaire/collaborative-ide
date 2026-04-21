@@ -118,7 +118,6 @@ export default function App() {
       const errorMsg = axios.isAxiosError(error) ? (error.response?.data?.message || 'Error') : 'Error';
       setOutput(errorMsg);
 
-      // RBAC: Broadcast the error if the Instructor's code crashed
       if (user?.role === 'Instructor' && socketRef.current) {
         socketRef.current.emit('instructor-execution', {
           sessionId: currentRoom,
