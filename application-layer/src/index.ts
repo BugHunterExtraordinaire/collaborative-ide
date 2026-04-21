@@ -1,12 +1,13 @@
 import express from 'express';
 import http from 'http';
-import { Server, Socket } from 'socket.io';
-import cors from 'cors';
-import { createAdapter } from '@socket.io/redis-adapter';
-import { createClient } from 'redis';
 import * as Y from 'yjs';
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
+import cors from 'cors';
+import { Server, Socket } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
+import { applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 
 import connectDB from './database/connect';
 
@@ -74,6 +75,21 @@ subClient.subscribe('yjs-updates', (message) => {
   }
 });
 
+subClient.subscribe('yjs-awareness', (message) => {
+  try {
+    const { sessionId, awarenessArray } = JSON.parse(message);
+    const ydoc = getYDoc(sessionId, false);
+    const awareness = (ydoc as any).awareness;
+    
+    if (awareness) {
+      const updateBuffer = new Uint8Array(awarenessArray);
+      applyAwarenessUpdate(awareness, updateBuffer, 'redis');
+    }
+  } catch (err) {
+    console.error('Error applying Redis Awareness update:', err);
+  }
+});
+
 wss.on('connection', (ws: WebSocket, req: any) => {
   const docName = req.url.slice(5).split('?')[0]; 
   console.log(`CRDT connection established for session: ${docName}`);
@@ -112,6 +128,22 @@ wss.on('connection', (ws: WebSocket, req: any) => {
         }
       }
     });
+
+    const awareness = (ydoc as any).awareness;
+    if (awareness) {
+      awareness.on('update', ({ added, updated, removed }: any, origin: any) => {
+        if (origin !== 'redis') {
+          const changedClients = added.concat(updated).concat(removed);
+          const awarenessUpdate = encodeAwarenessUpdate(awareness, changedClients);
+          
+          const payload = JSON.stringify({
+            sessionId: docName,
+            awarenessArray: Array.from(awarenessUpdate)
+          });
+          pubClient.publish('yjs-awareness', payload);
+        }
+      });
+    }
 
     Session.findOne({ session_id: docName }).then(session => {
       if (session && session.state) {

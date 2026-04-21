@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -8,9 +8,21 @@ import { type CollaborativeEditorProps } from '../types/interfaces';
 
 export default function CollaborativeEditor({ currentRoom, language, currentUser, onCodeChange }: CollaborativeEditorProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const providerRef = useRef<WebsocketProvider | null>(null);
+  const bindingRef = useRef<MonacoBinding | null>(null);
   
   const decorationsCollectionRef = useRef<editor.IEditorDecorationsCollection | null>(null);
   const [status, setStatus] = useState<string>('Connecting...');
+
+  useEffect(() => {
+    return () => {
+      if (bindingRef.current) bindingRef.current.destroy();
+      if (providerRef.current) {
+        providerRef.current.disconnect();
+        providerRef.current.destroy();
+      }
+    };
+  }, []);
 
   const handleEditorDidMount: OnMount = (editorInstance, monaco) => {
     editorRef.current = editorInstance;
@@ -18,7 +30,6 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
 
     const ydoc = new Y.Doc();
     const ytext = ydoc.getText('monaco');
-    const yAuthorship = ydoc.getMap<string>('authorship');
 
     const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
 
@@ -27,9 +38,16 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
       currentRoom, 
       ydoc
     );
+    providerRef.current = provider;
 
     provider.on('status', (event: { status: string }) => {
       setStatus(event.status === 'connected' ? 'Connected (Synced)' : 'Disconnected');
+      if (event.status === 'connected') {
+        provider.awareness.setLocalStateField('user', {
+          name: currentUser.username,
+          color: currentUser.role === 'Instructor' ? '#ffeb3b' : '#007acc'
+        });
+      }
     });
 
     provider.awareness.setLocalStateField('user', {
@@ -39,56 +57,70 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
 
     const editorModel = editorInstance.getModel();
     if (editorModel) {
-      new MonacoBinding(ytext, editorModel, new Set([editorInstance]), provider.awareness);
+      bindingRef.current = new MonacoBinding(ytext, editorModel, new Set([editorInstance]), provider.awareness);
     }
 
     const updateDecorations = () => {
       if (!editorModel || !decorationsCollectionRef.current) return;
+
+      const deltas = ytext.toDelta();
       const newDecorations: editor.IModelDeltaDecoration[] = [];
-      
-      yAuthorship.forEach((authorName, lineNumberStr) => {
-        const lineNum = parseInt(lineNumberStr);
-        if (lineNum <= editorModel.getLineCount()) {
+      let currentOffset = 0;
+
+      for (const op of deltas) {
+        const length = op.insert ? String(op.insert).length : 0;
+
+        if (op.attributes && op.attributes.author) {
+          const startPos = editorModel.getPositionAt(currentOffset);
+          const endPos = editorModel.getPositionAt(currentOffset + length);
+
           newDecorations.push({
-            range: new monaco.Range(lineNum, 1, lineNum, 1),
+            range: new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column),
             options: {
-              isWholeLine: true,
-              hoverMessage: { value: `📝 Written by: **${authorName}**` }
+              hoverMessage: { value: `📝 Written by: **${op.attributes.author}**` },
             }
           });
         }
-      });
+        currentOffset += length;
+      }
       decorationsCollectionRef.current.set(newDecorations);
     };
 
-    yAuthorship.observe(() => updateDecorations());
     provider.on('sync', (isSynced: boolean) => {
       if (isSynced) updateDecorations();
     });
 
-    let isRemoteUpdate = false;
+    ytext.observe((event, transaction) => {
+      updateDecorations();
 
-    ytext.observe((_, transaction) => {
-      if (!transaction.local) {
-        isRemoteUpdate = true;
+      if (transaction.local && transaction.origin !== 'authorship-formatting') {
+        let currentPos = 0;
+        const formatsToApply: { index: number, length: number }[] = [];
+
+        for (const op of event.delta) {
+          if (op.retain) {
+            currentPos += op.retain;
+          } else if (op.insert) {
+            const len = String(op.insert).length;
+            formatsToApply.push({ index: currentPos, length: len });
+            currentPos += len;
+          }
+        }
+
+        if (formatsToApply.length > 0) {
+          setTimeout(() => {
+            ydoc.transact(() => {
+              for (const fmt of formatsToApply) {
+                ytext.format(fmt.index, fmt.length, { author: currentUser.username });
+              }
+            }, 'authorship-formatting');
+          }, 0);
+        }
       }
     });
 
-    editorInstance.onDidChangeModelContent((e) => {
+    editorInstance.onDidChangeModelContent(() => {
       onCodeChange(editorInstance.getValue());
-
-      if (isRemoteUpdate) {
-        isRemoteUpdate = false;
-        return;
-      }
-
-      e.changes.forEach(change => {
-        const startLine = change.range.startLineNumber;
-        const endLine = change.range.endLineNumber;
-        for (let i = startLine; i <= endLine; i++) {
-          yAuthorship.set(i.toString(), currentUser.username);
-        }
-      });
     });
   };
 
