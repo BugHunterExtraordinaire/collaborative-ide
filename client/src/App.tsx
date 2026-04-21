@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import * as Y from 'yjs';
 import axios from 'axios';
 import CollaborativeEditor from './components/CollaborativeEditor';
@@ -25,21 +25,22 @@ export default function App() {
 
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
 
-  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
     if (currentRoom && user) {
       const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-      socketRef.current = io(`http://localhost:${backendPort}`);
+      const newSocket = io(`http://localhost:${backendPort}`);
 
-      socketRef.current.emit('join-session', currentRoom, user.username);
+      setSocket(newSocket);
 
-      socketRef.current.on('receive-execution', (broadcastOutput: string) => {
+      newSocket.on('receive-execution', (broadcastOutput: string) => {
         setOutput(broadcastOutput);
       });
 
       return () => {
-        socketRef.current?.disconnect();
+        newSocket.disconnect();
+        setSocket(null);
       };
     }
   }, [currentRoom, user]);
@@ -56,7 +57,7 @@ export default function App() {
   useEffect(() => {
     if (isPlaybackMode && currentRoom) {
       const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-      
+
       axios.get(`http://localhost:${backendPort}/api/sessions/${currentRoom}/history`)
         .then(res => {
           setHistoryLogs(res.data);
@@ -108,8 +109,8 @@ export default function App() {
       const resultOutput = response.data.output || 'Execution successful (No output)';
       setOutput(resultOutput);
 
-      if (user?.role === 'Instructor' && socketRef.current) {
-        socketRef.current.emit('instructor-execution', {
+      if (user?.role === 'Instructor' && socket) {
+        socket.emit('instructor-execution', {
           sessionId: currentRoom,
           output: `[Instructor Broadcast]:\n${resultOutput}`
         });
@@ -118,8 +119,8 @@ export default function App() {
       const errorMsg = axios.isAxiosError(error) ? (error.response?.data?.message || 'Error') : 'Error';
       setOutput(errorMsg);
 
-      if (user?.role === 'Instructor' && socketRef.current) {
-        socketRef.current.emit('instructor-execution', {
+      if (user?.role === 'Instructor' && socket) {
+        socket.emit('instructor-execution', {
           sessionId: currentRoom,
           output: `[Instructor Broadcast Failed]:\n${errorMsg}`
         });
@@ -160,7 +161,7 @@ export default function App() {
             <button
               onClick={() => {
                 setIsPlaybackMode(!isPlaybackMode);
-                setPlaybackIndex(Math.max(0, historyLogs.length - 1)); 
+                setPlaybackIndex(Math.max(0, historyLogs.length - 1));
               }}
               style={{ padding: '4px 10px', backgroundColor: isPlaybackMode ? '#ff9800' : '#4caf50', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
             >
@@ -199,7 +200,7 @@ export default function App() {
               height="100%"
               theme="vs-dark"
               language={language}
-              value={playbackCode} 
+              value={playbackCode}
               options={{ readOnly: true, minimap: { enabled: false }, fontSize: 14 }}
             />
           ) : (
@@ -224,7 +225,7 @@ export default function App() {
           <pre style={{ padding: '15px', margin: 0, flexGrow: 1, overflowY: 'auto', color: '#d4d4d4', whiteSpace: 'pre-wrap' }}>{output}</pre>
         </div>
         <div style={{ height: '50%', display: 'flex', flexDirection: 'column' }}>
-          <Chat currentRoom={currentRoom} username={user.username} socket={socketRef.current} />
+          <Chat currentRoom={currentRoom} username={user.username} socket={socket} />
         </div>
       </div>
 

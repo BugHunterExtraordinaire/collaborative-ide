@@ -39,12 +39,14 @@ export default function Chat({ currentRoom, username, socket }: ChatProps) {
       }]);
     });
 
+    socket.emit('join-session', currentRoom, username);
+
     return () => {
       socket.off('chat-history');
       socket.off('user-joined');
       socket.off('receive-message');
     };
-  }, [socket]);
+  }, [socket, currentRoom, username]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
