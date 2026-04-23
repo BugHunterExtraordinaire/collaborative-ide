@@ -24,14 +24,12 @@ export default function App() {
   const [playbackIndex, setPlaybackIndex] = useState<number>(0);
 
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
-
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
     if (currentRoom && user) {
       const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
       const newSocket = io(`http://localhost:${backendPort}`);
-
       setSocket(newSocket);
 
       newSocket.on('receive-execution', (broadcastOutput: string) => {
@@ -57,7 +55,6 @@ export default function App() {
   useEffect(() => {
     if (isPlaybackMode && currentRoom) {
       const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-
       axios.get(`http://localhost:${backendPort}/api/sessions/${currentRoom}/history`)
         .then(res => {
           setHistoryLogs(res.data);
@@ -72,10 +69,8 @@ export default function App() {
 
   useEffect(() => {
     if (!isPlaybackMode || historyLogs.length === 0) return;
-
     const tempDoc = new Y.Doc();
     const tempText = tempDoc.getText('monaco');
-
     for (let i = 0; i <= playbackIndex; i++) {
       const log = historyLogs[i];
       if (log && log.operation_data && log.operation_data.data) {
@@ -83,7 +78,6 @@ export default function App() {
         Y.applyUpdate(tempDoc, updateBuffer);
       }
     }
-
     setPlaybackCode(tempText.toString());
   }, [playbackIndex, historyLogs, isPlaybackMode]);
 
@@ -130,25 +124,24 @@ export default function App() {
     }
   };
 
-  if (!user || !token) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
-  }
-
-  if (!currentRoom) {
-    return <Dashboard user={user} onJoinRoom={setCurrentRoom} onLogout={handleLogout} />;
-  }
+  if (!user || !token) return <Login onLoginSuccess={handleLoginSuccess} />;
+  if (!currentRoom) return <Dashboard user={user} onJoinRoom={setCurrentRoom} onLogout={handleLogout} />;
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#000', color: '#fff', fontFamily: 'sans-serif' }}>
-
-      <div style={{ width: '60%', borderRight: '1px solid #333', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '10px', backgroundColor: '#252526', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '16px' }}>Collab-IDE ({currentRoom})</h3>
+    <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
+      
+      <div className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900">
+        
+        <div className="p-3 bg-zinc-800 flex justify-between items-center border-b border-zinc-700">
+          <div className="flex items-center gap-4">
+            <h3 className="m-0 text-md font-bold text-zinc-100 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              Collab-IDE <span className="text-zinc-400 text-sm font-mono">({currentRoom})</span>
+            </h3>
             <select
               value={language}
-              onChange={(e) => setLanguage(e.target.value as string)}
-              style={{ padding: '4px', backgroundColor: '#333', color: '#fff', border: 'none' }}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="p-1.5 bg-zinc-700 text-white border-none outline-none rounded text-sm cursor-pointer hover:bg-zinc-600 transition-colors"
               disabled={isPlaybackMode}
             >
               <option value="javascript">JavaScript</option>
@@ -157,44 +150,49 @@ export default function App() {
             </select>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div className="flex items-center gap-4">
             <button
               onClick={() => {
                 setIsPlaybackMode(!isPlaybackMode);
                 setPlaybackIndex(Math.max(0, historyLogs.length - 1));
               }}
-              style={{ padding: '4px 10px', backgroundColor: isPlaybackMode ? '#ff9800' : '#4caf50', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+              className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${
+                isPlaybackMode ? 'bg-orange-500 hover:bg-orange-600' : 'bg-zinc-700 hover:bg-zinc-600'
+              } text-white border-none cursor-pointer`}
             >
               {isPlaybackMode ? 'Exit Playback' : '⏪ Playback Mode'}
             </button>
-            <span style={{ color: '#4caf50', fontSize: '12px' }}>{user.username} ({user.role})</span>
+            <span className="text-zinc-300 text-sm">
+              {user.username} <span className="text-green-500">({user.role})</span>
+            </span>
             <button
               onClick={() => setCurrentRoom(null)}
-              style={{ padding: '4px 8px', backgroundColor: '#555', color: '#fff', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
+              className="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white text-sm rounded transition-colors cursor-pointer"
+            >
               Leave Room
             </button>
           </div>
         </div>
 
         {isPlaybackMode && historyLogs.length > 0 && (
-          <div style={{ padding: '15px', backgroundColor: '#1e1e1e', borderBottom: '1px solid #333' }}>
+          <div className="p-4 bg-zinc-900 border-b border-zinc-800">
             <input
               type="range"
               min="0"
               max={historyLogs.length - 1}
               value={playbackIndex}
               onChange={(e) => setPlaybackIndex(Number(e.target.value))}
-              style={{ width: '100%', cursor: 'pointer' }}
+              className="w-full cursor-pointer accent-orange-500"
             />
-            <div style={{ textAlign: 'center', fontSize: '13px', marginTop: '8px', color: '#aaa' }}>
-              Viewing Snapshot: <strong style={{ color: '#fff' }}>
+            <div className="text-center text-sm mt-2 text-zinc-400">
+              Viewing Snapshot: <strong className="text-orange-400">
                 {new Date(historyLogs[playbackIndex].timestamp).toLocaleTimeString()}
               </strong>
             </div>
           </div>
         )}
 
-        <div style={{ flexGrow: 1 }}>
+        <div className="grow">
           {isPlaybackMode ? (
             <Editor
               height="100%"
@@ -214,17 +212,27 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{ width: '40%', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e' }}>
-        <div style={{ height: '50%', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '10px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
-            <h3 style={{ margin: 0, fontSize: '16px' }}>Terminal Output</h3>
-            <button onClick={handleRunCode} disabled={isRunning || isPlaybackMode} style={{ padding: '6px 16px', backgroundColor: isRunning ? '#555' : '#007acc', color: '#fff', border: 'none', cursor: isRunning ? 'wait' : 'pointer', fontWeight: 'bold' }}>
-              {isRunning ? 'Running...' : 'Run Code'}
+      <div className="w-2/5 flex flex-col bg-zinc-900">
+        
+        <div className="h-1/2 flex flex-col border-b border-zinc-800">
+          <div className="p-3 bg-zinc-800 border-b border-zinc-700 flex justify-between items-center">
+            <h3 className="m-0 text-sm font-bold text-zinc-100 uppercase tracking-wider">Terminal Output</h3>
+            <button 
+              onClick={handleRunCode} 
+              disabled={isRunning || isPlaybackMode} 
+              className={`px-4 py-1.5 text-sm font-bold rounded transition-colors ${
+                isRunning || isPlaybackMode ? 'bg-zinc-600 cursor-not-allowed text-zinc-400' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer text-white'
+              }`}
+            >
+              {isRunning ? 'Running...' : 'Run Code ▶'}
             </button>
           </div>
-          <pre style={{ padding: '15px', margin: 0, flexGrow: 1, overflowY: 'auto', color: '#d4d4d4', whiteSpace: 'pre-wrap' }}>{output}</pre>
+          <pre className="p-4 m-0 grow overflow-y-auto text-zinc-300 whitespace-pre-wrap font-mono text-sm bg-black">
+            {output}
+          </pre>
         </div>
-        <div style={{ height: '50%', display: 'flex', flexDirection: 'column' }}>
+        
+        <div className="h-1/2 flex flex-col">
           <Chat currentRoom={currentRoom} username={user.username} socket={socket} />
         </div>
       </div>

@@ -65,34 +65,49 @@ export default function Chat({ currentRoom, username, socket }: ChatProps) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#1e1e1e', borderTop: '1px solid #333' }}>
-      <div style={{ padding: '8px', backgroundColor: '#252526', borderBottom: '1px solid #333', fontSize: '14px', fontWeight: 'bold' }}>
-        Session Chat
+    <div className="flex flex-col h-full bg-zinc-900 border-t border-zinc-800">
+      
+      <div className="p-3 bg-zinc-800 border-b border-zinc-700 text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-2">
+        <span>Session Chat</span>
       </div>
       
-      <div style={{ flexGrow: 1, overflowY: 'auto', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="grow overflow-y-auto p-4 flex flex-col gap-3">
         {messages.map((msg) => (
-          <div key={msg.id} style={{ fontSize: '13px', color: msg.isSystem ? '#888' : '#ddd' }}>
-            <span style={{ fontWeight: 'bold', color: msg.isSystem ? '#888' : msg.username === username ? '#4caf50' : '#007acc' }}>
-              {msg.username}: 
-            </span> {msg.text}
+          <div key={msg.id} className="text-sm">
+            {msg.isSystem ? (
+              <div className="text-center text-xs text-zinc-500 italic my-2">
+                — {msg.text} —
+              </div>
+            ) : (
+              <div className={`flex flex-col ${msg.username === username ? 'items-end' : 'items-start'}`}>
+                <span className="text-xs text-zinc-400 mb-1 ml-1">{msg.username}</span>
+                <div className={`px-3 py-2 rounded-lg max-w-[85%] wrap-break-word ${
+                  msg.username === username 
+                    ? 'bg-blue-600 text-white rounded-br-none' 
+                    : 'bg-zinc-700 text-zinc-100 rounded-bl-none'
+                }`}>
+                  {msg.text}
+                </div>
+              </div>
+            )}
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={sendMessage} style={{ display: 'flex', padding: '10px', borderTop: '1px solid #333' }}>
+      <form onSubmit={sendMessage} className="flex p-3 bg-zinc-800 border-t border-zinc-700 gap-2">
         <input 
           type="text" 
           value={input} 
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message..."
-          style={{ flexGrow: 1, padding: '8px', backgroundColor: '#333', border: 'none', color: '#fff', borderRadius: '4px 0 0 4px', outline: 'none' }}
+          className="grow p-2.5 bg-zinc-900 border border-zinc-700 text-white rounded focus:ring-1 focus:ring-blue-500 outline-none transition-shadow"
         />
-        <button type="submit" style={{ padding: '8px 12px', backgroundColor: '#007acc', border: 'none', color: '#fff', borderRadius: '0 4px 4px 0', cursor: 'pointer', fontWeight: 'bold' }}>
+        <button type="submit" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 transition-colors border-none text-white rounded font-bold cursor-pointer shadow">
           Send
         </button>
       </form>
+      
     </div>
   );
 }

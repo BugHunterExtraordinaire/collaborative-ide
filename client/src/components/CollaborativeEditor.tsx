@@ -125,9 +125,12 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '8px', backgroundColor: '#1e1e1e', color: '#4caf50', fontSize: '12px', fontFamily: 'monospace' }}>
-        Status: {status} | Role: {currentUser.role}
+    <div className="h-full flex flex-col bg-[#1e1e1e]">
+      <div className="p-1.5 px-3 bg-[#1e1e1e] flex justify-between items-center text-xs font-mono border-b border-zinc-800">
+        <span className={status.includes('Connected') ? 'text-green-500' : 'text-orange-500'}>
+          ● {status}
+        </span>
+        <span className="text-zinc-400">Role: <span className="text-zinc-200">{currentUser.role}</span></span>
       </div>
       <Editor
         height="100%"

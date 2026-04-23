@@ -21,12 +21,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         await axios.post(`http://localhost:${backendPort}/api/auth/register`, {
           username, email, password, role
         });
-        const loginRes = await axios.post(`http://localhost:${backendPort}/api/auth/login`, { email, password });
-        onLoginSuccess(loginRes.data.user, loginRes.data.token);
-      } else {
-        const loginRes = await axios.post(`http://localhost:${backendPort}/api/auth/login`, { email, password });
-        onLoginSuccess(loginRes.data.user, loginRes.data.token);
       }
+      const loginRes = await axios.post(`http://localhost:${backendPort}/api/auth/login`, { email, password });
+      onLoginSuccess(loginRes.data.user, loginRes.data.token);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Authentication failed.');
@@ -37,48 +34,48 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#000', color: '#fff' }}>
-      <div style={{ backgroundColor: '#1e1e1e', padding: '40px', borderRadius: '8px', width: '350px', border: '1px solid #333' }}>
-        <h2 style={{ marginTop: 0, textAlign: 'center' }}>
+    <div className="flex justify-center items-center h-screen bg-black text-white font-sans">
+      <div className="bg-zinc-900 p-10 rounded-xl w-100 border border-zinc-800 shadow-2xl">
+        <h2 className="mt-0 text-2xl font-bold text-center mb-6">
           {isRegistering ? 'Create Account' : 'Collab-IDE Login'}
         </h2>
         
-        {error && <div style={{ color: '#ff5555', marginBottom: '15px', fontSize: '14px', textAlign: 'center' }}>{error}</div>}
+        {error && <div className="text-red-500 mb-4 text-sm text-center bg-red-500/10 p-2 rounded">{error}</div>}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {isRegistering && (
             <input 
               type="text" placeholder="Username" required value={username} onChange={(e) => setUsername(e.target.value)}
-              style={{ padding: '10px', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px' }}
+              className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
             />
           )}
           <input 
             type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)}
-            style={{ padding: '10px', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px' }}
+            className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
           />
           <input 
             type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)}
-            style={{ padding: '10px', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px' }}
+            className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
           />
           
           {isRegistering && (
             <select 
-              value={role} onChange={(e) => setRole(e.target.value as string)}
-              style={{ padding: '10px', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px' }}
+              value={role} onChange={(e) => setRole(e.target.value)}
+              className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
             >
               <option value="Student">I am a Student</option>
               <option value="Instructor">I am an Instructor</option>
             </select>
           )}
 
-          <button type="submit" style={{ padding: '12px', backgroundColor: '#007acc', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+          <button type="submit" className="p-3 mt-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded cursor-pointer font-bold">
             {isRegistering ? 'Register' : 'Log In'}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: '#aaa' }}>
+        <p className="text-center mt-6 text-sm text-zinc-400">
           {isRegistering ? 'Already have an account? ' : 'Need an account? '}
-          <span style={{ color: '#007acc', cursor: 'pointer' }} onClick={() => { setIsRegistering(!isRegistering); setError(''); }}>
+          <span className="text-blue-500 hover:text-blue-400 cursor-pointer font-semibold" onClick={() => { setIsRegistering(!isRegistering); setError(''); }}>
             {isRegistering ? 'Log In' : 'Sign Up'}
           </span>
         </p>
