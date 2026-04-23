@@ -15,7 +15,7 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
       .catch(err => console.error('Failed to load sessions', err));
   }, [user]);
 
-  const handleCreateSession = async (e: React.FormEvent) => {
+  const handleCreateSession: React.SubmitEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     try {
       const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
@@ -29,7 +29,7 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
     }
   };
 
-  const handleJoinExisting = (e: React.FormEvent) => {
+  const handleJoinExisting: React.SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     if (joinId.trim()) {
       onJoinRoom(joinId.trim());

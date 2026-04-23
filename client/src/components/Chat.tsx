@@ -52,7 +52,7 @@ export default function Chat({ currentRoom, username, socket }: ChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = (e: React.FormEvent) => {
+  const sendMessage: React.SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     if (!input.trim() || !socket) return;
 

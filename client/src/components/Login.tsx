@@ -12,7 +12,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
   const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setError('');
 
