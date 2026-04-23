@@ -21,7 +21,7 @@ const createSession: DefaultController = async (req, res) => {
 
 const getSession: DefaultController = async (req, res) => {
 
-  const { owner } = req.body;
+  const { owner } = req.query;
 
   const sessions = await Session.find({ owner })
     .select('session_id name created_at')
