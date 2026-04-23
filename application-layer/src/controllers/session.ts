@@ -4,14 +4,14 @@ import OperationLog from "../models/OperationLog";
 import Session from '../models/Session';
 
 const createSession: DefaultController = async (req, res) => {
-  const { name, language } = req.body;
+  const { name, owner } = req.body;
 
   const sessionId = crypto.randomBytes(4).toString('hex');
-
 
   const newSession = new Session({
     session_id: sessionId,
     name: name || `Session-${sessionId}`,
+    owner
   });
 
   await newSession.save();
@@ -21,7 +21,9 @@ const createSession: DefaultController = async (req, res) => {
 
 const getSession: DefaultController = async (req, res) => {
 
-  const sessions = await Session.find()
+  const { owner } = req.body;
+
+  const sessions = await Session.find({ owner })
     .select('session_id name created_at')
     .sort({ created_at: -1 })
     .limit(10);

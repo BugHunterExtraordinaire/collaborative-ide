@@ -11,6 +11,10 @@ const sessionSchema: mongoose.Schema = new mongoose.Schema({
     type: String,
     required: true
   },
+  owner: {
+    type: String,
+    required: true
+  },
   state: {
     type: Buffer,
   },
