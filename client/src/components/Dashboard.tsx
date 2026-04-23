@@ -8,19 +8,21 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
   const [newRoomName, setNewRoomName] = useState('');
   const [joinId, setJoinId] = useState('');
 
-  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-  
   useEffect(() => {
-    axios.get(`http://localhost:${backendPort}/api/sessions`)
+    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+    
+    axios.get(`http://localhost:${backendPort}/api/sessions?owner=${user.username}`)
       .then(res => setSessions(res.data))
       .catch(err => console.error('Failed to load sessions', err));
-  }, [backendPort]);
+  }, [user]);
 
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
       const res = await axios.post(`http://localhost:${backendPort}/api/sessions`, {
-        name: newRoomName
+        name: newRoomName,
+        owner: user.username
       });
       onJoinRoom(res.data.session_id);
     } catch (error) {
@@ -48,7 +50,7 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
           <h3 style={{ marginTop: 0, color: '#007acc' }}>Create New Session</h3>
           <form onSubmit={handleCreateSession} style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
             <input 
-              type="text" placeholder="e.g., CS101 Lab 3" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} required
+              type="text" placeholder="e.g., Study Group" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} required
               style={{ flexGrow: 1, padding: '10px', backgroundColor: '#333', color: '#fff', border: 'none', borderRadius: '4px' }}
             />
             <button type="submit" style={{ padding: '10px 15px', backgroundColor: '#007acc', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Create</button>
@@ -65,28 +67,26 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
           
         </div>
         
-        {user.role === 'Instructor' && (
-          <div style={{ flex: 1, backgroundColor: '#1e1e1e', padding: '20px', borderRadius: '8px', border: '1px solid #333' }}>
-            <h3 style={{ marginTop: 0 }}>Active Global Sessions</h3>
-            {sessions.length === 0 ? (
-              <p style={{ color: '#888' }}>No active sessions.</p>
-            ) : (
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {sessions.map(session => (
-                  <li key={session.session_id} style={{ padding: '10px', backgroundColor: '#252526', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 'bold' }}>{session.name}</div>
-                      <div style={{ fontSize: '12px', color: '#888' }}>ID: {session.session_id}</div>
-                    </div>
-                    <button onClick={() => onJoinRoom(session.session_id)} style={{ padding: '6px 12px', backgroundColor: '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', cursor: 'pointer' }}>
-                      Join
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
+        <div style={{ flex: 1, backgroundColor: '#1e1e1e', padding: '20px', borderRadius: '8px', border: '1px solid #333' }}>
+          <h3 style={{ marginTop: 0 }}>Your Active Sessions</h3>
+          {sessions.length === 0 ? (
+            <p style={{ color: '#888' }}>You have not created any sessions yet.</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {sessions.map(session => (
+                <li key={session.session_id} style={{ padding: '10px', backgroundColor: '#252526', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontWeight: 'bold' }}>{session.name}</div>
+                    <div style={{ fontSize: '12px', color: '#888' }}>ID: {session.session_id}</div>
+                  </div>
+                  <button onClick={() => onJoinRoom(session.session_id)} style={{ padding: '6px 12px', backgroundColor: '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', cursor: 'pointer' }}>
+                    Join
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
