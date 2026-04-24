@@ -10,7 +10,9 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
 
   useEffect(() => {
     const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-    axios.get(`http://localhost:${backendPort}/api/sessions?owner=${user.username}`)
+    const safeUsername = encodeURIComponent(user.username);
+    
+    axios.get(`http://localhost:${backendPort}/api/sessions?username=${safeUsername}`)
       .then(res => setSessions(res.data))
       .catch(err => console.error('Failed to load sessions', err));
   }, [user]);
@@ -80,7 +82,12 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
                 {sessions.map(session => (
                   <li key={session.session_id} className="p-4 bg-zinc-800/50 hover:bg-zinc-800 transition-colors rounded-lg flex justify-between items-center border border-zinc-800/50">
                     <div>
-                      <div className="font-bold text-lg text-white">{session.name}</div>
+                      <div className="font-bold text-lg text-white flex items-center gap-2">
+                        {session.name}
+                        {session.owner !== user.username && (
+                          <span className="text-[10px] font-normal text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">Joined</span>
+                        )}
+                      </div>
                       <div className="text-xs text-zinc-400 font-mono mt-1">ID: {session.session_id}</div>
                     </div>
                     <button onClick={() => onJoinRoom(session.session_id)} className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 transition-colors text-white rounded font-medium">

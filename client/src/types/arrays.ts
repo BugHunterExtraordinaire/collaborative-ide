@@ -7,4 +7,5 @@ export type ChatHistoryArray = Array<{
 export type SessionsArray = Array<{
   session_id: string;
   name: string;
+  owner: string;
 }>;
