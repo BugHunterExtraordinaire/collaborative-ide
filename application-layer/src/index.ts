@@ -171,15 +171,14 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('join-session', async (sessionId: string, username: string) => {
     socket.join(sessionId);
-    console.log(`User '${username}' joined session: ${sessionId}`);
-
+    
     try {
-      const session = await Session.findOne({ session_id: sessionId });
-      if (session && session.chat_history) {
-        socket.emit('chat-history', session.chat_history);
-      }
+      await Session.findOneAndUpdate(
+        { session_id: sessionId },
+        { $addToSet: { participants: username } }
+      );
     } catch (err) {
-      console.error('Error loading chat history:', err);
+      console.error(`Failed to add ${username} to participants of ${sessionId}:`, err);
     }
 
     socket.to(sessionId).emit('user-joined', { username, socketId: socket.id });
