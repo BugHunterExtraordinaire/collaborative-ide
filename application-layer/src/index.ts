@@ -16,6 +16,7 @@ import sessionRouter from './routes/session';
 
 import Session from './models/Session';
 import OperationLog from './models/OperationLog';
+import handleError from './middleware/errorHandler';
 
 const { setupWSConnection, getYDoc } = require('y-websocket/bin/utils');
 
@@ -29,6 +30,8 @@ app.use(express.json());
 
 app.use('/api/auth', authRouter);
 app.use('/api/sessions', sessionRouter);
+
+app.use(handleError);
 
 const port = process.env.PORT || 4000;
 
