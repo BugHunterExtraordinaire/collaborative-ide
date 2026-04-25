@@ -15,6 +15,7 @@ interface ISession extends Document {
   session_id: string;
   name: string;
   owner: string;
+  participants?: Array<string>;
   state: Buffer;
   chat_history: Array<{ username: string; message: string; timestamp: Date }>;
   created_at: Date;
