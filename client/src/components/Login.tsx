@@ -16,14 +16,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     e.preventDefault();
     setError('');
 
-    try {
+try {
       if (isRegistering) {
         await axios.post(`http://localhost:${backendPort}/api/auth/register`, {
           username, email, password, role
         });
       }
       const loginRes = await axios.post(`http://localhost:${backendPort}/api/auth/login`, { email, password });
-      onLoginSuccess(loginRes.data.user, loginRes.data.token);
+      
+      onLoginSuccess(loginRes.data.user); 
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Authentication failed.');

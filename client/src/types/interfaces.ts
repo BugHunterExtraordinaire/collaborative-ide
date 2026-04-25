@@ -6,7 +6,7 @@ export interface UserObject {
 }
 
 export interface LoginProps {
-  onLoginSuccess: (user: UserObject, token: string) => void;
+  onLoginSuccess: (user: UserObject) => void;
 }
 
 export interface ChatProps {

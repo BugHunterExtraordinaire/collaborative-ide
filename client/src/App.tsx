@@ -1,17 +1,21 @@
-import { io, Socket } from 'socket.io-client';
-import { useState, useEffect } from 'react';
 import * as Y from 'yjs';
 import axios from 'axios';
+
+import { io, Socket } from 'socket.io-client';
+import { useState, useEffect } from 'react';
+
 import CollaborativeEditor from './components/CollaborativeEditor';
 import Login from './components/Login';
 import Chat from './components/Chat';
 import Dashboard from './components/Dashboard';
 import Editor from '@monaco-editor/react';
+
 import type { UserObject } from './types/interfaces';
+
+axios.defaults.withCredentials = true;
 
 export default function App() {
   const [user, setUser] = useState<UserObject | null>(null);
-  const [token, setToken] = useState<string | null>(null);
 
   const [code, setCode] = useState<string>('');
   const [output, setOutput] = useState<string>('System Ready. Awaiting execution...');
@@ -47,7 +51,6 @@ export default function App() {
     const savedToken = sessionStorage.getItem('ide_token');
     const savedUser = sessionStorage.getItem('ide_user');
     if (savedToken && savedUser) {
-      setToken(savedToken);
       setUser(JSON.parse(savedUser));
     }
   }, []);
@@ -81,17 +84,19 @@ export default function App() {
     setPlaybackCode(tempText.toString());
   }, [playbackIndex, historyLogs, isPlaybackMode]);
 
-  const handleLoginSuccess = (userData: UserObject, jwt: string) => {
+  const handleLoginSuccess = (userData: UserObject) => {
     setUser(userData);
-    setToken(jwt);
-    sessionStorage.setItem('ide_token', jwt);
     sessionStorage.setItem('ide_user', JSON.stringify(userData));
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+    try {
+      await axios.post(`http://localhost:${backendPort}/api/auth/logout`);
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
     setUser(null);
-    setToken(null);
-    sessionStorage.removeItem('ide_token');
     sessionStorage.removeItem('ide_user');
   };
 
@@ -109,7 +114,7 @@ export default function App() {
           output: `[Instructor Broadcast]:\n${resultOutput}`
         });
       }
-      
+
       if (user?.role === 'Student' && socket) {
         socket.emit('student-execution', {
           sessionId: currentRoom,
@@ -131,14 +136,14 @@ export default function App() {
     }
   };
 
-  if (!user || !token) return <Login onLoginSuccess={handleLoginSuccess} />;
+  if (!user) return <Login onLoginSuccess={handleLoginSuccess} />;
   if (!currentRoom) return <Dashboard user={user} onJoinRoom={setCurrentRoom} onLogout={handleLogout} />;
 
   return (
     <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
-      
+
       <div className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900">
-        
+
         <div className="p-3 bg-zinc-800 flex justify-between items-center border-b border-zinc-700">
           <div className="flex items-center gap-4">
             <h3 className="m-0 text-md font-bold text-zinc-100 flex items-center gap-2">
@@ -163,9 +168,8 @@ export default function App() {
                 setIsPlaybackMode(!isPlaybackMode);
                 setPlaybackIndex(Math.max(0, historyLogs.length - 1));
               }}
-              className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${
-                isPlaybackMode ? 'bg-orange-500 hover:bg-orange-600' : 'bg-zinc-700 hover:bg-zinc-600'
-              } text-white border-none cursor-pointer`}
+              className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${isPlaybackMode ? 'bg-orange-500 hover:bg-orange-600' : 'bg-zinc-700 hover:bg-zinc-600'
+                } text-white border-none cursor-pointer`}
             >
               {isPlaybackMode ? 'Exit Playback' : '⏪ Playback Mode'}
             </button>
@@ -220,16 +224,15 @@ export default function App() {
       </div>
 
       <div className="w-2/5 flex flex-col bg-zinc-900">
-        
+
         <div className="h-1/2 flex flex-col border-b border-zinc-800">
           <div className="p-3 bg-zinc-800 border-b border-zinc-700 flex justify-between items-center">
             <h3 className="m-0 text-sm font-bold text-zinc-100 uppercase tracking-wider">Terminal Output</h3>
-            <button 
-              onClick={handleRunCode} 
-              disabled={isRunning || isPlaybackMode} 
-              className={`px-4 py-1.5 text-sm font-bold rounded transition-colors ${
-                isRunning || isPlaybackMode ? 'bg-zinc-600 cursor-not-allowed text-zinc-400' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer text-white'
-              }`}
+            <button
+              onClick={handleRunCode}
+              disabled={isRunning || isPlaybackMode}
+              className={`px-4 py-1.5 text-sm font-bold rounded transition-colors ${isRunning || isPlaybackMode ? 'bg-zinc-600 cursor-not-allowed text-zinc-400' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer text-white'
+                }`}
             >
               {isRunning ? 'Running...' : 'Run Code ▶'}
             </button>
@@ -238,7 +241,7 @@ export default function App() {
             {output}
           </pre>
         </div>
-        
+
         <div className="h-1/2 flex flex-col">
           <Chat currentRoom={currentRoom} username={user.username} socket={socket} />
         </div>
