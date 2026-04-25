@@ -4,6 +4,8 @@ import * as Y from 'yjs';
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+
 import { Server, Socket } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
@@ -24,8 +26,12 @@ dotenv.config({
 })
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/api/auth', authRouter);
 app.use('/api/sessions', sessionRouter);
@@ -36,8 +42,9 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*", 
-    methods: ["GET", "POST"]
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true,
   }
 });
 
@@ -55,7 +62,7 @@ const wss = new WebSocket.Server({ noServer: true });
 
 server.on('upgrade', (request, socket, head) => {
   const pathname = request.url;
-  
+
   if (pathname && pathname.startsWith('/yjs/')) {
     wss.handleUpgrade(request, socket as any, head, (ws) => {
       wss.emit('connection', ws, request);
@@ -67,9 +74,9 @@ subClient.subscribe('yjs-updates', (message) => {
   try {
     const { sessionId, updateArray } = JSON.parse(message);
     const ydoc = getYDoc(sessionId, false);
-    
+
     const updateBuffer = new Uint8Array(updateArray);
-    Y.applyUpdate(ydoc, updateBuffer, 'redis'); 
+    Y.applyUpdate(ydoc, updateBuffer, 'redis');
   } catch (err) {
     console.error('Error applying Redis Yjs update:', err);
   }
@@ -80,7 +87,7 @@ subClient.subscribe('yjs-awareness', (message) => {
     const { sessionId, awarenessArray } = JSON.parse(message);
     const ydoc = getYDoc(sessionId, false);
     const awareness = (ydoc as any).awareness;
-    
+
     if (awareness) {
       const updateBuffer = new Uint8Array(awarenessArray);
       applyAwarenessUpdate(awareness, updateBuffer, 'redis');
@@ -91,26 +98,26 @@ subClient.subscribe('yjs-awareness', (message) => {
 });
 
 wss.on('connection', (ws: WebSocket, req: any) => {
-  const docName = req.url.slice(5).split('?')[0]; 
+  const docName = req.url.slice(5).split('?')[0];
   console.log(`CRDT connection established for session: ${docName}`);
-  
+
   const ydoc = getYDoc(docName, false);
 
   if (!(ydoc as any).hasDatabaseWired) {
-    (ydoc as any).hasDatabaseWired = true; 
+    (ydoc as any).hasDatabaseWired = true;
 
     ydoc.on('update', async (update: Uint8Array, origin: any) => {
       const updateDeltaBuffer = Buffer.from(update);
       const fullStateBuffer = Buffer.from(Y.encodeStateAsUpdate(ydoc));
 
       if (origin !== 'redis' && origin !== 'db-load') {
-        const payload = JSON.stringify({ 
-          sessionId: docName, 
-          updateArray: Array.from(update) 
+        const payload = JSON.stringify({
+          sessionId: docName,
+          updateArray: Array.from(update)
         });
         pubClient.publish('yjs-updates', payload);
       }
-      
+
       if (origin !== 'db-load') {
         try {
           await Session.findOneAndUpdate(
@@ -135,7 +142,7 @@ wss.on('connection', (ws: WebSocket, req: any) => {
         if (origin !== 'redis') {
           const changedClients = added.concat(updated).concat(removed);
           const awarenessUpdate = encodeAwarenessUpdate(awareness, changedClients);
-          
+
           const payload = JSON.stringify({
             sessionId: docName,
             awarenessArray: Array.from(awarenessUpdate)
@@ -153,7 +160,7 @@ wss.on('connection', (ws: WebSocket, req: any) => {
     }).catch(err => console.error('Error loading from MongoDB:', err));
   }
 
-  setupWSConnection(ws, req, { docName }); 
+  setupWSConnection(ws, req, { docName });
 });
 
 io.on('connection', (socket: Socket) => {
@@ -162,7 +169,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('join-session', async (sessionId: string, username: string) => {
     socket.join(sessionId);
     console.log(`User '${username}' joined session: ${sessionId}`);
-    
+
     try {
       const session = await Session.findOne({ session_id: sessionId });
       if (session && session.chat_history) {
@@ -181,7 +188,7 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('send-message', async (data: { sessionId: string, message: string, username: string }) => {
     const timestamp = new Date().toISOString();
-    
+
     io.to(data.sessionId).emit('receive-message', {
       username: data.username,
       message: data.message,
@@ -191,7 +198,7 @@ io.on('connection', (socket: Socket) => {
     try {
       await Session.findOneAndUpdate(
         { session_id: data.sessionId },
-        { 
+        {
           $push: { chat_history: { username: data.username, message: data.message, timestamp } },
           $set: { updated_at: new Date() }
         },
@@ -212,6 +219,6 @@ server.listen(port, async () => {
     await connectDB(process.env.MONGO_URI as string);
     console.log(`API & Synchronization Cluster listening on http://localhost:${port}`);
   } catch (error) {
-    
+
   }
 });
