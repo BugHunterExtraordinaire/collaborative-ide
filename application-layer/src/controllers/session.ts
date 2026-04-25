@@ -11,7 +11,8 @@ const createSession: DefaultController = async (req, res) => {
   const newSession = new Session({
     session_id: sessionId,
     name: name || `Session-${sessionId}`,
-    owner
+    owner,
+    participants: [owner],
   });
 
   await newSession.save();
@@ -21,12 +22,17 @@ const createSession: DefaultController = async (req, res) => {
 
 const getSession: DefaultController = async (req, res) => {
 
-  const { owner } = req.query;
+  const { username } = req.query;
 
-  const sessions = await Session.find({ owner })
-    .select('session_id name created_at')
-    .sort({ created_at: -1 })
-    .limit(10);
+  const sessions = await Session.find({
+      $or: [
+        { owner: username },
+        { participants: username }
+      ]
+    })
+      .select('session_id name owner createdAt')
+      .sort({ createdAt: -1 })
+      .limit(10);
 
   res.status(200).json(sessions);
 }
