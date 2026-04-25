@@ -1,4 +1,4 @@
-import { DeepPartial, Document } from "mongoose"
+import { Document } from "mongoose"
 import jwt from "jsonwebtoken"
 
 interface IUser extends Document {
