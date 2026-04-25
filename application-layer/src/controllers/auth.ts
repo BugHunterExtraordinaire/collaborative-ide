@@ -21,9 +21,15 @@ const loginUser: DefaultController = async (req, res) => {
 
   const token = user.generateJWT(jwtPayload);
 
+  res.cookie('ide_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000
+  });
+
   res.status(200).json({
     message: "Login successful",
-    token,
     user: jwtPayload,
   });
 }
@@ -47,7 +53,13 @@ const registerUser: DefaultController = async (req, res) => {
   })
 }
 
+const logoutUser: DefaultController = async (req, res) => {
+  res.clearCookie('ide_token');
+  res.status(200).json({ message: "Logged out successfully" });
+}
+
 export {
   loginUser,
   registerUser,
+  logoutUser,
 }
