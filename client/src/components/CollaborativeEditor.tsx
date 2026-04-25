@@ -10,6 +10,7 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const bindingRef = useRef<MonacoBinding | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const decorationsCollectionRef = useRef<editor.IEditorDecorationsCollection | null>(null);
   const [status, setStatus] = useState<string>('Connecting...');
@@ -21,6 +22,7 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
         providerRef.current.disconnect();
         providerRef.current.destroy();
       }
+      if (debounceTimerRef.current) clearInterval(debounceTimerRef.current);
     };
   }, []);
 
@@ -28,15 +30,17 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
     editorRef.current = editorInstance;
     decorationsCollectionRef.current = editorInstance.createDecorationsCollection([]);
 
-    const ydoc = new Y.Doc();
-    const ytext = ydoc.getText('monaco');
+    const localDoc = new Y.Doc();
+    const localText = localDoc.getText('monaco');
+
+    const networkDoc = new Y.Doc();
 
     const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
 
     const provider = new WebsocketProvider(
       `ws://localhost:${backendPort}/yjs`, 
       currentRoom, 
-      ydoc
+      networkDoc 
     );
     providerRef.current = provider;
 
@@ -57,13 +61,50 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
 
     const editorModel = editorInstance.getModel();
     if (editorModel) {
-      bindingRef.current = new MonacoBinding(ytext, editorModel, new Set([editorInstance]), provider.awareness);
+      bindingRef.current = new MonacoBinding(localText, editorModel, new Set([editorInstance]));
     }
+
+    const outboundBuffer = { current: [] as Uint8Array[] };
+
+    localDoc.on('update', (update: Uint8Array, origin: string) => {
+      if (origin !== 'network') {
+        outboundBuffer.current.push(update);
+
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
+        debounceTimerRef.current = setTimeout(() => {
+          if (outboundBuffer.current.length > 0) {
+            console.log(`[True Debounce] Silence detected. Compressing ${outboundBuffer.current.length} keystrokes.`);
+            
+            const mergedUpdate = Y.mergeUpdates(outboundBuffer.current);
+            outboundBuffer.current = []; 
+            Y.applyUpdate(networkDoc, mergedUpdate, 'local');
+          }
+        }, 200);
+      }
+    });
+
+    networkDoc.on('update', (update: Uint8Array, origin: string) => {
+      if (origin !== 'local') {
+        Y.applyUpdate(localDoc, update, 'network');
+      }
+    });
+
+    debounceTimerRef.current = setInterval(() => {
+      if (outboundBuffer.current.length > 0) {
+        console.log(`[Debounce Engine] Compressing ${outboundBuffer.current.length} keystrokes into 1 payload.`);
+        
+        const mergedUpdate = Y.mergeUpdates(outboundBuffer.current);
+        outboundBuffer.current = [];
+        
+        Y.applyUpdate(networkDoc, mergedUpdate, 'local');
+      }
+    }, 200);
 
     const updateDecorations = () => {
       if (!editorModel || !decorationsCollectionRef.current) return;
 
-      const deltas = ytext.toDelta();
+      const deltas = localText.toDelta();
       const newDecorations: editor.IModelDeltaDecoration[] = [];
       let currentOffset = 0;
 
@@ -90,7 +131,7 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
       if (isSynced) updateDecorations();
     });
 
-    ytext.observe((event, transaction) => {
+    localText.observe((event, transaction) => {
       updateDecorations();
 
       if (transaction.local && transaction.origin !== 'authorship-formatting') {
@@ -109,9 +150,9 @@ export default function CollaborativeEditor({ currentRoom, language, currentUser
 
         if (formatsToApply.length > 0) {
           setTimeout(() => {
-            ydoc.transact(() => {
+            localDoc.transact(() => {
               for (const fmt of formatsToApply) {
-                ytext.format(fmt.index, fmt.length, { author: currentUser.username });
+                localText.format(fmt.index, fmt.length, { author: currentUser.username });
               }
             }, 'authorship-formatting');
           }, 0);

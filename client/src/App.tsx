@@ -109,6 +109,13 @@ export default function App() {
           output: `[Instructor Broadcast]:\n${resultOutput}`
         });
       }
+      
+      if (user?.role === 'Student' && socket) {
+        socket.emit('student-execution', {
+          sessionId: currentRoom,
+          output: `[${user?.username} Broadcast]:\n${resultOutput}`
+        });
+      }
     } catch (error: unknown) {
       const errorMsg = axios.isAxiosError(error) ? (error.response?.data?.message || 'Error') : 'Error';
       setOutput(errorMsg);
