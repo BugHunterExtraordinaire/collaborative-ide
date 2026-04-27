@@ -41,13 +41,8 @@ async function ensureImageExists(docker: Docker, imageName: string): Promise<voi
   });
 }
 
-app.post('/api/execute', async (req, res): Promise<void> => {
+app.post('/execute', async (req, res): Promise<void> => {
   
-  if (req.cookies.ide_token) {
-    res.status(401).json({ message: "Unauthorized: no valid JWT detected" });
-    return;
-  }
-
   const { code, language } = req.body as ExecutionRequest;
 
   if (!code || !language) {

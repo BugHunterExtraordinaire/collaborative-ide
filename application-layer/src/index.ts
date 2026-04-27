@@ -5,6 +5,7 @@ import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+import axios from 'axios';
 import cookieParser from 'cookie-parser';
 
 import { Server, Socket } from 'socket.io';
@@ -40,6 +41,22 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRouter);
 app.use('/api/sessions', sessionRouter);
+
+app.post('/api/execute', async (req, res) => {
+  if (!req.cookies.ide_token) {
+    return res.status(401).json({ message: "Unauthorized: No valid JWT detected." });
+  }
+
+  try {
+    const runnerResponse = await axios.post('http://localhost:5000/execute', req.body);
+    
+    res.status(200).json(runnerResponse.data);
+  } catch (error: any) {
+    console.error('Execution proxy failed:', error.message);
+    const errorMsg = error.response?.data?.message || 'Execution service unavailable.';
+    res.status(500).json({ message: errorMsg });
+  }
+});
 
 app.use(handleError);
 
