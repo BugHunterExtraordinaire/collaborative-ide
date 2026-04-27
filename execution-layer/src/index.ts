@@ -1,13 +1,18 @@
 import express from 'express';
 import Docker from 'dockerode';
 import cors from 'cors';
+import helmet from 'helmet';
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 const docker = new Docker();
 
-app.use(cors());
+app.use(helmet());
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
 app.use(express.json());
 
 interface ExecutionRequest {
@@ -36,7 +41,13 @@ async function ensureImageExists(docker: Docker, imageName: string): Promise<voi
   });
 }
 
-app.post('/execute', async (req, res): Promise<void> => {
+app.post('/api/execute', async (req, res): Promise<void> => {
+  
+  if (req.cookies.ide_token) {
+    res.status(401).json({ message: "Unauthorized: no valid JWT detected" });
+    return;
+  }
+
   const { code, language } = req.body as ExecutionRequest;
 
   if (!code || !language) {

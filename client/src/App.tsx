@@ -104,7 +104,7 @@ export default function App() {
     setIsRunning(true);
     setOutput('Spawning isolated container...\nExecuting...');
     try {
-      const response = await axios.post('http://localhost:5000/execute', { code, language });
+      const response = await axios.post('http://localhost:5000/api/execute', { code, language });
       const resultOutput = response.data.output || 'Execution successful (No output)';
       setOutput(resultOutput);
 

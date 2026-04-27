@@ -4,6 +4,7 @@ import * as Y from 'yjs';
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 
 import { Server, Socket } from 'socket.io';
@@ -27,10 +28,13 @@ dotenv.config({
 })
 
 const app = express();
+
+app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: true,
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -45,7 +49,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: true,
     methods: ["GET", "POST"],
     credentials: true,
   }
