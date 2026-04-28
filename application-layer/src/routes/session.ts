@@ -1,6 +1,11 @@
 import { Router } from 'express';
 
-import { createSession, deleteSession, getSession, getSessionHistory } from '../controllers/session';
+import { 
+  createSession, 
+  deleteSession, 
+  getSession, 
+  getSessionHistory 
+} from '../controllers/session';
 
 import { authenticateUser } from '../middleware';
 
