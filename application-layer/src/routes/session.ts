@@ -1,11 +1,16 @@
 import { Router } from 'express';
-import { createSession, getSession, getSessionHistory } from '../controllers/session';
+
+import { createSession, deleteSession, getSession, getSessionHistory } from '../controllers/session';
+
+import { authenticateUser } from '../middleware';
 
 const router = Router();
 
-router.post('/', createSession);
+router.post('/', authenticateUser, createSession);
 
-router.get('/', getSession);
-router.get('/:id/history', getSessionHistory);
+router.get('/', authenticateUser, getSession);
+router.get('/:id/history', authenticateUser, getSessionHistory);
+
+router.delete('/:id', authenticateUser, deleteSession);
 
 export default router;

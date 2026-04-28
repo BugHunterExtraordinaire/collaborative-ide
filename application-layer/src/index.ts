@@ -17,10 +17,12 @@ import connectDB from './database/connect';
 
 import authRouter from './routes/auth';
 import sessionRouter from './routes/session';
+import systemRouter from './routes/system';
 
 import Session from './models/Session';
 import OperationLog from './models/OperationLog';
-import handleError from './middleware/errorHandler';
+
+import { handleError } from './middleware/';
 
 const { setupWSConnection, getYDoc } = require('y-websocket/bin/utils');
 
@@ -41,6 +43,7 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRouter);
 app.use('/api/sessions', sessionRouter);
+app.use('/api/system', systemRouter);
 
 app.post('/api/execute', async (req, res) => {
   if (!req.cookies.ide_token) {
