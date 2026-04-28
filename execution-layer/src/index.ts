@@ -124,4 +124,12 @@ app.post('/execute', async (req, res): Promise<void> => {
   }
 });
 
+app.get('/containers', async (req, res): Promise<void> => {
+  
+});
+
+app.delete('/containers/:id', async (req, res): Promise<void> => {
+  
+});
+
 app.listen(port, () => console.log(`Runner Service listening on http://localhost:${port}`));
