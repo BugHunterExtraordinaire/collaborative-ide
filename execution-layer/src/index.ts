@@ -5,7 +5,6 @@ import helmet from 'helmet';
 
 const app = express();
 const port = process.env.PORT || 5000;
-
 const docker = new Docker();
 
 app.use(helmet());
@@ -21,36 +20,30 @@ interface ExecutionRequest {
 }
 
 async function ensureImageExists(docker: Docker, imageName: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    console.log(`Checking image: ${imageName}...`);
-    docker.pull(imageName, (err: any, stream: any) => {
-      if (err) return reject(err);
-      
-      docker.modem.followProgress(stream, onFinished, onProgress);
-
-      function onFinished(err: any, output: any) {
+  try {
+    await docker.getImage(imageName).inspect();
+    return;
+  } catch (error) {
+    console.log(`Image not found locally. Pulling ${imageName}...`);
+    return new Promise((resolve, reject) => {
+      docker.pull(imageName, (err: any, stream: any) => {
         if (err) return reject(err);
-        console.log(`Image ${imageName} is ready.`);
-        resolve();
-      }
-
-      function onProgress(event: any) {
-        
-      }
+        docker.modem.followProgress(stream, (err, output) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
     });
-  });
+  }
 }
 
 app.post('/execute', async (req, res): Promise<void> => {
-  
   const { code, language } = req.body as ExecutionRequest;
 
   if (!code || !language) {
     res.status(400).json({ message: "Error: please provide both code and language." });
     return;
-  };
-
-  console.log(`Received ${language} execution request.`);
+  }
 
   let dockerImg: string = "";
   let executionCmd: Array<string> = [];
@@ -63,7 +56,8 @@ app.post('/execute', async (req, res): Promise<void> => {
     executionCmd = ['node', '-e', code];
   } else if (language === 'cpp') {
     dockerImg = 'frolvlad/alpine-gxx';
-    executionCmd = ['sh', '-c', `echo '${code.replace(/'/g, "'\\''")}' > main.cpp && g++ main.cpp -o main && ./main`];
+    const base64Code = Buffer.from(code).toString('base64');
+    executionCmd = ['sh', '-c', `echo '${base64Code}' | base64 -d > main.cpp && g++ main.cpp -o main && ./main`];
   } else {
     res.status(400).json({ message: "Error: Unsupported language." });
     return;
@@ -72,26 +66,25 @@ app.post('/execute', async (req, res): Promise<void> => {
   let container: Docker.Container | null = null;
 
   try {
-    
     await ensureImageExists(docker, dockerImg);
 
     container = await docker.createContainer({
       Image: dockerImg,
       Cmd: executionCmd,
-      Tty: false,
+      Tty: true,
       HostConfig: {
         Memory: 128 * 1024 * 1024,
         NetworkMode: "none"
       }
-    })
+    });
 
     await container.start();
 
+    let timer: NodeJS.Timeout;
     const timeoutLimit = 10000;
-    let timedOut = false;
 
-    const timeoutPromise = new Promise((resolve, reject) => {
-      setTimeout(() => {
+    const timeoutPromise = new Promise((_, reject) => {
+      timer = setTimeout(() => {
         reject(new Error("Execution timed out (Limit: 10 seconds)."));
       }, timeoutLimit);
     });
@@ -101,24 +94,22 @@ app.post('/execute', async (req, res): Promise<void> => {
       timeoutPromise
     ]);
 
-    if (timedOut) return;
+    clearTimeout(timer!);
 
     const logs = await container.logs({ stdout: true, stderr: true });
-    const output = logs.toString('utf8').replace(/[\x00-\x1F\x7F]/g, "").trim();
+    const output = logs.toString('utf8').trim();
 
     res.status(200).json({ output });
-
   } catch (error: any) {
-    console.error(`Error: ${error.message}`);
-    res.status(500).json({ message: `Error: ${error.message}` });
+    console.error(`Execution Error: ${error.message}`);
+    res.status(500).json({ message: error.message });
   } finally {
     if (container) {
-      console.log("Cleanup phase initiated.");
       try {
         await container.remove({ force: true });
-        res.status(200).json({message: "Container deleted successfully!"})
+        console.log(`Container cleaned up successfully.`);
       } catch (cleanupError) {
-        res.status(500).json({message: `Failed to cleanup container: ${cleanupError}`})
+        console.error(`Failed to cleanup container: ${cleanupError}`);
       }
     }
   }
@@ -127,23 +118,26 @@ app.post('/execute', async (req, res): Promise<void> => {
 app.get('/containers', async (req, res): Promise<void> => {
   try {
     const containers = await docker.listContainers({ all: true });
-    const activeRunners = containers.filter(container => 
-      container.Image.includes('node') || container.Image.includes('python') || container.Image.includes('alpine')
-    );
-    res.json(activeRunners);
+    const activeRunners = containers.filter(container =>
+      container.Image.includes('node') || container.Image.includes('python') || container.Image.includes('alpine'));
+
+    res.status(200).json(activeRunners);
   } catch (error: any) {
     res.status(500).json({ message: 'Failed to fetch containers', error: error.message });
   }
-}); 
+});
+
 
 app.delete('/containers/:id', async (req, res): Promise<void> => {
   try {
     const container = docker.getContainer(req.params.id);
     await container.remove({ force: true });
+
     res.status(200).json({ message: `Container ${req.params.id} destroyed.` });
   } catch (error: any) {
     res.status(500).json({ message: 'Failed to destroy container', error: error.message });
   }
 });
 
-app.listen(port, () => console.log(`Runner Service listening on http://localhost:${port}`));
+
+app.listen(port, () => console.log(`Runner Service listening on http://localhost:${port}`)); 
