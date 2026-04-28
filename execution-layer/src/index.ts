@@ -106,7 +106,7 @@ app.post('/execute', async (req, res): Promise<void> => {
     const logs = await container.logs({ stdout: true, stderr: true });
     const output = logs.toString('utf8').replace(/[\x00-\x1F\x7F]/g, "").trim();
 
-    res.json({ output });
+    res.status(200).json({ output });
 
   } catch (error: any) {
     console.error(`Error: ${error.message}`);
@@ -116,20 +116,34 @@ app.post('/execute', async (req, res): Promise<void> => {
       console.log("Cleanup phase initiated.");
       try {
         await container.remove({ force: true });
-        console.log("Container removed successfully.");
+        res.status(200).json({message: "Container deleted successfully!"})
       } catch (cleanupError) {
-        console.error("Failed to cleanup container:", cleanupError);
+        res.status(500).json({message: `Failed to cleanup container: ${cleanupError}`})
       }
     }
   }
 });
 
 app.get('/containers', async (req, res): Promise<void> => {
-  
-});
+  try {
+    const containers = await docker.listContainers({ all: true });
+    const activeRunners = containers.filter(container => 
+      container.Image.includes('node') || container.Image.includes('python') || container.Image.includes('alpine')
+    );
+    res.json(activeRunners);
+  } catch (error: any) {
+    res.status(500).json({ message: 'Failed to fetch containers', error: error.message });
+  }
+}); 
 
 app.delete('/containers/:id', async (req, res): Promise<void> => {
-  
+  try {
+    const container = docker.getContainer(req.params.id);
+    await container.remove({ force: true });
+    res.status(200).json({ message: `Container ${req.params.id} destroyed.` });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Failed to destroy container', error: error.message });
+  }
 });
 
 app.listen(port, () => console.log(`Runner Service listening on http://localhost:${port}`));
