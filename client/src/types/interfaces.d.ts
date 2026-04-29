@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io-client';
 
-import { type SessionsArray } from './arrays';
+import type { SessionsArray, HistoryLogArray } from './arrays';
 
 export interface UserObject {
   username: string;
@@ -88,4 +88,10 @@ export interface EditorToolbarProps {
   setPlaybackIndex: (index: number) => void;
   user: UserObject;
   onLeaveRoom: () => void;
+}
+
+export interface PlaybackScrubberProps {
+  historyLogs: HistoryLogArray;
+  playbackIndex: number;
+  setPlaybackIndex: (index: number) => void;
 }
