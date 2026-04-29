@@ -103,7 +103,7 @@ export interface TerminalPanelProps {
   onRunCode: () => void;
 }
 
-export interface LoginFormProps {
+export interface AuthenticationProps {
   backendPort: string;
   onSuccess: (user: UserObject) => void;
   onToggleMode: () => void;
