@@ -1,5 +1,7 @@
 import { Socket } from 'socket.io-client';
 
+import { type SessionsArray } from './arrays';
+
 export interface UserObject {
   username: string;
   role: string;
@@ -55,4 +57,13 @@ export interface FormProps {
   joinBtnText: string;
   onCreate: (name: string) => void;
   onJoin: (id: string) => void;
+}
+
+export interface ListProps {
+  title: string;
+  sessions: SessionsArray;
+  currentUser: UserObject;
+  joinBtnText: string;
+  onJoin: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
