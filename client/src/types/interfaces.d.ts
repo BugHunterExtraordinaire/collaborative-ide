@@ -95,3 +95,10 @@ export interface PlaybackScrubberProps {
   playbackIndex: number;
   setPlaybackIndex: (index: number) => void;
 }
+
+export interface TerminalPanelProps {
+  output: string;
+  isRunning: boolean;
+  isPlaybackMode: boolean;
+  onRunCode: () => void;
+}
