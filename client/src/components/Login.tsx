@@ -16,15 +16,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     e.preventDefault();
     setError('');
 
-try {
+    try {
       if (isRegistering) {
         await axios.post(`http://localhost:${backendPort}/api/auth/register`, {
           username, email, password, role
         });
       }
       const loginRes = await axios.post(`http://localhost:${backendPort}/api/auth/login`, { email, password });
-      
-      onLoginSuccess(loginRes.data.user); 
+
+      onLoginSuccess(loginRes.data.user);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Authentication failed.');
@@ -40,27 +40,27 @@ try {
         <h2 className="mt-0 text-2xl font-bold text-center mb-6">
           {isRegistering ? 'Create Account' : 'Collab-IDE Login'}
         </h2>
-        
+
         {error && <div className="text-red-500 mb-4 text-sm text-center bg-red-500/10 p-2 rounded">{error}</div>}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {isRegistering && (
-            <input 
+            <input
               type="text" placeholder="Username" required value={username} onChange={(e) => setUsername(e.target.value)}
               className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
             />
           )}
-          <input 
+          <input
             type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)}
             className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
           />
-          <input 
+          <input
             type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)}
             className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
           />
-          
+
           {isRegistering && (
-            <select 
+            <select
               value={role} onChange={(e) => setRole(e.target.value)}
               className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
             >

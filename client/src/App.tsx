@@ -10,7 +10,8 @@ import Chat from './components/Chat';
 import Dashboard from './components/Dashboard';
 import Editor from '@monaco-editor/react';
 
-import type { UserObject } from './types/interfaces';
+import { type UserObject } from './types/interfaces';
+import { type HistoryLogArray } from './types/arrays';
 
 axios.defaults.withCredentials = true;
 
@@ -22,7 +23,7 @@ export default function App() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [language, setLanguage] = useState('javascript');
 
-  const [historyLogs, setHistoryLogs] = useState<any[]>([]);
+  const [historyLogs, setHistoryLogs] = useState<HistoryLogArray>([]);
   const [playbackCode, setPlaybackCode] = useState<string>('Loading history...');
   const [isPlaybackMode, setIsPlaybackMode] = useState<boolean>(false);
   const [playbackIndex, setPlaybackIndex] = useState<number>(0);

@@ -1,7 +1,7 @@
 import { type DashboardProps } from '../types/interfaces';
-import StudentDashboard from './dashboards/StudentDashboard';
-import InstructorDashboard from './dashboards/InstructorDashboard';
-import AdminDashboard from './dashboards/AdminDashboard';
+import StudentDashboard from './StudentDashboard';
+import InstructorDashboard from './InstructorDashboard';
+import AdminDashboard from './AdminDashboard';
 
 export default function Dashboard(props: DashboardProps) {
   switch (props.user.role) {

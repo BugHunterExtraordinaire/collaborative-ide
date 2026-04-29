@@ -1,4 +1,4 @@
-import { type DockerContainer } from "./interfaces";
+import type { DockerContainer, HistoryLog } from "./interfaces";
 
 export type ChatHistoryArray = Array<{
   username: string;
@@ -13,3 +13,5 @@ export type SessionsArray = Array<{
 }>;
 
 export type ContainerArray = Array<DockerContainer>;
+
+export type HistoryLogArray = Array<HistoryLog>;

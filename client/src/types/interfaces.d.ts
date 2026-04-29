@@ -67,3 +67,13 @@ export interface ListProps {
   onJoin: (id: string) => void;
   onDelete?: (id: string) => void;
 }
+
+export interface HistoryLog {
+  _id: string;
+  session_id: string;
+  operation_data: {
+    type: 'Buffer';
+    data: Array<number>;
+  };
+  timestamp: string;
+}
