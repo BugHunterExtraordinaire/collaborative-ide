@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { type DashboardProps } from '../types/interfaces';
 import { type SessionsArray } from '../types/arrays';
-import DashboardHeader from './shared/DashboardHeader';
-import SessionForms from './shared/SessionForms';
-import SessionList from './shared/SessionList';
+import DashboardHeader from './dashboard/DashboardHeader';
+import SessionForms from './dashboard/SessionForms';
+import SessionList from './dashboard/SessionList';
 
 export default function InstructorDashboard({ user, onJoinRoom, onLogout }: DashboardProps) {
   const [sessions, setSessions] = useState<SessionsArray>([]);
