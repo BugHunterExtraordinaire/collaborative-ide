@@ -47,3 +47,12 @@ export interface HeaderProps {
   user: UserObject;
   onLogout: () => void;
 }
+
+export interface FormProps {
+  createTitle: string;
+  createBtnText: string;
+  joinTitle: string;
+  joinBtnText: string;
+  onCreate: (name: string) => void;
+  onJoin: (id: string) => void;
+}
