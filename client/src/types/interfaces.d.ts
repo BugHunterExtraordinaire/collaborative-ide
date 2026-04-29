@@ -102,3 +102,9 @@ export interface TerminalPanelProps {
   isPlaybackMode: boolean;
   onRunCode: () => void;
 }
+
+export interface LoginFormProps {
+  backendPort: string;
+  onSuccess: (user: UserObject) => void;
+  onToggleMode: () => void;
+}
