@@ -1,16 +1,20 @@
 import * as Y from 'yjs';
 import axios from 'axios';
-
 import { io, Socket } from 'socket.io-client';
 import { useState, useEffect } from 'react';
 
-import CollaborativeEditor from './components/CollaborativeEditor';
 import Login from './components/Login';
-import Chat from './components/Chat';
 import Dashboard from './components/Dashboard';
+import Chat from './components/Chat';
+import CollaborativeEditor from './components/CollaborativeEditor';
 import Editor from '@monaco-editor/react';
 
+import EditorToolbar from './components/workspace/EditorToolbar';
+import PlaybackScrubber from './components/workspace/PlaybackScrubber';
+import TerminalPanel from './components/workspace/TerminalPanel';
+
 import { type UserObject } from './types/interfaces';
+
 import { type HistoryLogArray } from './types/arrays';
 
 axios.defaults.withCredentials = true;
@@ -49,9 +53,8 @@ export default function App() {
   }, [currentRoom, user]);
 
   useEffect(() => {
-    const savedToken = sessionStorage.getItem('ide_token');
     const savedUser = sessionStorage.getItem('ide_user');
-    if (savedToken && savedUser) {
+    if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
   }, []);
@@ -106,6 +109,7 @@ export default function App() {
     setOutput('Spawning isolated container...\nExecuting...');
     try {
       const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+      
       const response = await axios.post(`http://localhost:${backendPort}/api/execute`, { code, language });
       const resultOutput = response.data.output || 'Execution successful (No output)';
       setOutput(resultOutput);
@@ -145,64 +149,25 @@ export default function App() {
     <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
 
       <div className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900">
+        
+        <EditorToolbar 
+          currentRoom={currentRoom}
+          language={language}
+          setLanguage={setLanguage}
+          isPlaybackMode={isPlaybackMode}
+          setIsPlaybackMode={setIsPlaybackMode}
+          historyLength={historyLogs.length}
+          setPlaybackIndex={setPlaybackIndex}
+          user={user}
+          onLeaveRoom={() => setCurrentRoom(null)}
+        />
 
-        <div className="p-3 bg-zinc-800 flex justify-between items-center border-b border-zinc-700">
-          <div className="flex items-center gap-4">
-            <h3 className="m-0 text-md font-bold text-zinc-100 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              Collab-IDE <span className="text-zinc-400 text-sm font-mono">({currentRoom})</span>
-            </h3>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="p-1.5 bg-zinc-700 text-white border-none outline-none rounded text-sm cursor-pointer hover:bg-zinc-600 transition-colors"
-              disabled={isPlaybackMode}
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="python">Python 3</option>
-              <option value="cpp">C++</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => {
-                setIsPlaybackMode(!isPlaybackMode);
-                setPlaybackIndex(Math.max(0, historyLogs.length - 1));
-              }}
-              className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${isPlaybackMode ? 'bg-orange-500 hover:bg-orange-600' : 'bg-zinc-700 hover:bg-zinc-600'
-                } text-white border-none cursor-pointer`}
-            >
-              {isPlaybackMode ? 'Exit Playback' : '⏪ Playback Mode'}
-            </button>
-            <span className="text-zinc-300 text-sm">
-              {user.username} <span className="text-green-500">({user.role})</span>
-            </span>
-            <button
-              onClick={() => setCurrentRoom(null)}
-              className="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white text-sm rounded transition-colors cursor-pointer"
-            >
-              Leave Room
-            </button>
-          </div>
-        </div>
-
-        {isPlaybackMode && historyLogs.length > 0 && (
-          <div className="p-4 bg-zinc-900 border-b border-zinc-800">
-            <input
-              type="range"
-              min="0"
-              max={historyLogs.length - 1}
-              value={playbackIndex}
-              onChange={(e) => setPlaybackIndex(Number(e.target.value))}
-              className="w-full cursor-pointer accent-orange-500"
-            />
-            <div className="text-center text-sm mt-2 text-zinc-400">
-              Viewing Snapshot: <strong className="text-orange-400">
-                {new Date(historyLogs[playbackIndex].timestamp).toLocaleTimeString()}
-              </strong>
-            </div>
-          </div>
+        {isPlaybackMode && (
+          <PlaybackScrubber 
+            historyLogs={historyLogs}
+            playbackIndex={playbackIndex}
+            setPlaybackIndex={setPlaybackIndex}
+          />
         )}
 
         <div className="grow">
@@ -226,29 +191,19 @@ export default function App() {
       </div>
 
       <div className="w-2/5 flex flex-col bg-zinc-900">
-
-        <div className="h-1/2 flex flex-col border-b border-zinc-800">
-          <div className="p-3 bg-zinc-800 border-b border-zinc-700 flex justify-between items-center">
-            <h3 className="m-0 text-sm font-bold text-zinc-100 uppercase tracking-wider">Terminal Output</h3>
-            <button
-              onClick={handleRunCode}
-              disabled={isRunning || isPlaybackMode}
-              className={`px-4 py-1.5 text-sm font-bold rounded transition-colors ${isRunning || isPlaybackMode ? 'bg-zinc-600 cursor-not-allowed text-zinc-400' : 'bg-blue-600 hover:bg-blue-700 cursor-pointer text-white'
-                }`}
-            >
-              {isRunning ? 'Running...' : 'Run Code ▶'}
-            </button>
-          </div>
-          <pre className="p-4 m-0 grow overflow-y-auto text-zinc-300 whitespace-pre-wrap font-mono text-sm bg-black">
-            {output}
-          </pre>
-        </div>
+        
+        <TerminalPanel 
+          output={output}
+          isRunning={isRunning}
+          isPlaybackMode={isPlaybackMode}
+          onRunCode={handleRunCode}
+        />
 
         <div className="h-1/2 flex flex-col">
           <Chat currentRoom={currentRoom} username={user.username} socket={socket} />
         </div>
-      </div>
 
+      </div>
     </div>
   );
 }
