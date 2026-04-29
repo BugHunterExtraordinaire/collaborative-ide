@@ -77,3 +77,15 @@ export interface HistoryLog {
   };
   timestamp: string;
 }
+
+export interface EditorToolbarProps {
+  currentRoom: string;
+  language: string;
+  setLanguage: (lang: string) => void;
+  isPlaybackMode: boolean;
+  setIsPlaybackMode: (mode: boolean) => void;
+  historyLength: number;
+  setPlaybackIndex: (index: number) => void;
+  user: UserObject;
+  onLeaveRoom: () => void;
+}
