@@ -35,3 +35,15 @@ export interface CollaborativeEditorProps {
   currentUser: { username: string; role: string };
   onCodeChange: (code: string) => void;
 }
+
+export interface DockerContainer {
+  Id: string;
+  Image: string;
+  State: string;
+  Status: string;
+}
+
+export interface HeaderProps {
+  user: UserObject;
+  onLogout: () => void;
+}

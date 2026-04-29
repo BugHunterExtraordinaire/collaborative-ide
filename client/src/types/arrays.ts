@@ -1,3 +1,5 @@
+import { type DockerContainer } from "./interfaces";
+
 export type ChatHistoryArray = Array<{
   username: string;
   message: string;
@@ -9,3 +11,5 @@ export type SessionsArray = Array<{
   name: string;
   owner: string;
 }>;
+
+export type ContainerArray = Array<DockerContainer>;
