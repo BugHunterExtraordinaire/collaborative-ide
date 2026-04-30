@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { FormProps } from '../../types/interfaces';
+import type { FormProps } from '../../../types/interfaces';
 
 export default function SessionForms({ createTitle, createBtnText, joinTitle, joinBtnText, onCreate, onJoin }: FormProps) {
   const [newRoomName, setNewRoomName] = useState('');

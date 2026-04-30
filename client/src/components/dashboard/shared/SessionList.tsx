@@ -1,4 +1,4 @@
-import { type ListProps } from '../../types/interfaces';
+import { type ListProps } from '../../../types/interfaces';
 
 export default function SessionList({ title, sessions, currentUser, joinBtnText, onJoin, onDelete }: ListProps) {
   const isAdmin = currentUser.role === 'System Administrator';

@@ -1,4 +1,4 @@
-import { type HeaderProps } from '../../types/interfaces';
+import { type HeaderProps } from '../../../types/interfaces';
 
 export default function DashboardHeader({ user, onLogout }: HeaderProps) {
   const badgeStyle = 
