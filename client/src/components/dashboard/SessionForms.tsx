@@ -6,13 +6,13 @@ export default function SessionForms({ createTitle, createBtnText, joinTitle, jo
   const [newRoomName, setNewRoomName] = useState('');
   const [joinId, setJoinId] = useState('');
 
-  const handleCreate: React.SubmitEventHandler = (e) => {
+  const handleCreate: React.SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     onCreate(newRoomName);
     setNewRoomName('');
   };
 
-  const handleJoin: React.SubmitEventHandler = (e) => {
+  const handleJoin: React.SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     if (joinId.trim()) onJoin(joinId.trim());
     setJoinId('');

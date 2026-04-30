@@ -108,3 +108,14 @@ export interface AuthenticationProps {
   onSuccess: (user: UserObject) => void;
   onToggleMode: () => void;
 }
+
+export interface MessageBubbleProps {
+  msg: Message;
+  currentUser: string;
+}
+
+export interface ChatInputProps {
+  input: string;
+  setInput: (val: string) => void;
+  onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
+}
