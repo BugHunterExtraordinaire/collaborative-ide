@@ -107,3 +107,9 @@ export interface MessageBubbleProps {
   msg: Message;
   currentUser: string;
 }
+
+export interface ChatInputProps {
+  input: string;
+  setInput: (val: string) => void;
+  onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
+}
