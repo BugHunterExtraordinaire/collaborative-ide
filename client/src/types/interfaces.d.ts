@@ -102,3 +102,8 @@ export interface TerminalPanelProps {
   isPlaybackMode: boolean;
   onRunCode: () => void;
 }
+
+export interface MessageBubbleProps {
+  msg: Message;
+  currentUser: string;
+}
