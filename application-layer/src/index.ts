@@ -22,7 +22,7 @@ import systemRouter from './routes/system';
 import Session from './models/Session';
 import OperationLog from './models/OperationLog';
 
-import { handleError } from './middleware/';
+import { authenticateUser, handleError } from './middleware/';
 
 const { setupWSConnection, getYDoc } = require('y-websocket/bin/utils');
 
@@ -45,11 +45,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/sessions', sessionRouter);
 app.use('/api/system', systemRouter);
 
-app.post('/api/execute', async (req, res) => {
-  if (!req.cookies.ide_token) {
-    return res.status(401).json({ message: "Unauthorized: No valid JWT detected." });
-  }
-
+app.post('/api/execute', authenticateUser, async (req, res) => {
+  
   try {
     const runnerResponse = await axios.post('http://localhost:5000/execute', req.body);
     
@@ -193,45 +190,45 @@ wss.on('connection', (ws: WebSocket, req: any) => {
 io.on('connection', (socket: Socket) => {
   console.log(`Client connected: ${socket.id}`);
 
-  socket.on('join-session', async (sessionId: string, username: string) => {
+  socket.on('join-session', async (sessionId, username) => {
     socket.join(sessionId);
-    
+
     try {
-      await Session.findOneAndUpdate(
-        { session_id: sessionId },
-        { $addToSet: { participants: username } }
-      );
+      const session = await Session.findOne({ session_id: sessionId });
+      
+      if (session && session.chat_history) {
+        socket.emit('chat-history', session.chat_history);
+      } else {
+        socket.emit('chat-history', []);
+      }
     } catch (err) {
-      console.error(`Failed to add ${username} to participants of ${sessionId}:`, err);
+      console.error("Database error fetching chat history");
     }
 
-    socket.to(sessionId).emit('user-joined', { username, socketId: socket.id });
+    socket.to(sessionId).emit('user-joined', { username });
   });
 
   socket.on('instructor-execution', (data: { sessionId: string, output: string }) => {
     socket.to(data.sessionId).emit('receive-execution', data.output);
   });
 
-  socket.on('send-message', async (data: { sessionId: string, message: string, username: string }) => {
+  socket.on('send-message', async (data) => {
+    const { sessionId, message, username } = data;
     const timestamp = new Date().toISOString();
 
-    io.to(data.sessionId).emit('receive-message', {
-      username: data.username,
-      message: data.message,
-      timestamp
-    });
+    io.to(sessionId).emit('receive-message', { username, message, timestamp });
 
     try {
       await Session.findOneAndUpdate(
-        { session_id: data.sessionId },
-        {
-          $push: { chat_history: { username: data.username, message: data.message, timestamp } },
-          $set: { updated_at: new Date() }
-        },
-        { upsert: true }
+        { session_id: sessionId },
+        { 
+          $push: { 
+            chatHistory: { username, message, timestamp } 
+          } 
+        }
       );
     } catch (err) {
-      console.error('Error saving chat message:', err);
+      console.error("Failed to save chat message to database:", err);
     }
   });
 
