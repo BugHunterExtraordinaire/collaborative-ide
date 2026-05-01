@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type DashboardProps, type DockerContainer } from '../../types/interfaces';
 import { type SessionsArray } from '../../types/arrays';
 import DashboardHeader from './shared/DashboardHeader';
@@ -7,46 +7,59 @@ import SessionForms from './shared/SessionForms';
 import SessionList from './shared/SessionList';
 
 export default function AdminDashboard({ user, onJoinRoom, onLogout }: DashboardProps) {
-  const [sessions, setSessions] = useState<SessionsArray>([]);
-  const [containers, setContainers] = useState<DockerContainer[]>([]);
+  const queryClient = useQueryClient();
+  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
 
-  useEffect(() => {
-    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-    axios.get(`http://localhost:${backendPort}/api/sessions?username=${encodeURIComponent(user.username)}&role=${encodeURIComponent(user.role)}`)
-      .then(res => setSessions(res.data))
-      .catch(err => console.error(err));
-  }, [user]);
+  const { data: sessions = [] } = useQuery<SessionsArray>({
+    queryKey: ['sessions', user.username, user.role],
+    queryFn: async () => {
+      const res = await axios.get(`http://localhost:${backendPort}/api/sessions?username=${encodeURIComponent(user.username)}&role=${encodeURIComponent(user.role)}`);
+      return res.data;
+    }
+  });
 
-  useEffect(() => {
-    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-    const fetchContainers = () => {
-      axios.get(`http://localhost:${backendPort}/api/system/containers`)
-        .then(res => setContainers(res.data))
-        .catch(err => console.error(err));
-    };
+  const { data: containers = [] } = useQuery<DockerContainer[]>({
+    queryKey: ['docker-containers'],
+    queryFn: async () => {
+      const res = await axios.get(`http://localhost:${backendPort}/api/system/containers`);
+      return res.data;
+    },
+    refetchInterval: 5000,
+    enabled: user.role === 'System Administrator'
+  });
 
-    fetchContainers();
-    const intervalId = setInterval(fetchContainers, 5000);
-    return () => clearInterval(intervalId);
-  }, []);
+  const createSessionMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const res = await axios.post(`http://localhost:${backendPort}/api/sessions`, { name, owner: user.username });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      onJoinRoom(data.session_id);
+    }
+  });
 
-  const handleCreateSession = async (name: string) => {
-    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-    const res = await axios.post(`http://localhost:${backendPort}/api/sessions`, { name, owner: user.username });
-    onJoinRoom(res.data.session_id);
-  };
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (sessionId: string) => {
+      await axios.delete(`http://localhost:${backendPort}/api/sessions/${sessionId}`, { data: { role: user.role } });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] }); 
+    }
+  });
 
-  const handleDeleteSession = async (sessionId: string) => {
-    if (!window.confirm(`WARNING: This will permanently delete session ${sessionId}. Continue?`)) return;
-    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-    await axios.delete(`http://localhost:${backendPort}/api/sessions/${sessionId}`, { data: { role: user.role } });
-    setSessions(prev => prev.filter(s => s.session_id !== sessionId));
-  };
+  const killContainerMutation = useMutation({
+    mutationFn: async (containerId: string) => {
+      await axios.delete(`http://localhost:${backendPort}/api/system/containers/${containerId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker-containers'] });
+    }
+  });
 
-  const handleKillContainer = async (containerId: string) => {
-    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-    await axios.delete(`http://localhost:${backendPort}/api/system/containers/${containerId}`);
-    setContainers(prev => prev.filter(c => c.Id !== containerId));
+  const handleDeleteSession = (sessionId: string) => {
+    if (window.confirm(`WARNING: This will permanently delete session ${sessionId}. Continue?`)) {
+      deleteSessionMutation.mutate(sessionId);
+    }
   };
 
   return (
@@ -59,7 +72,8 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout }: Dashboard
             <SessionForms 
               createTitle="Create Admin Session" createBtnText="Create Instance"
               joinTitle="Spy on Session" joinBtnText="Connect"
-              onCreate={handleCreateSession} onJoin={onJoinRoom} 
+              onCreate={(name) => createSessionMutation.mutate(name)} 
+              onJoin={onJoinRoom} 
             />
 
             <div className="bg-zinc-900 p-6 rounded-xl border border-red-900/50 shadow-lg flex flex-col">
@@ -85,8 +99,12 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout }: Dashboard
                       </div>
                       <div className="text-sm font-bold text-white">{container.Image}</div>
                       <div className="text-xs text-zinc-500">{container.Status}</div>
-                      <button onClick={() => handleKillContainer(container.Id)} className="mt-2 w-full py-1.5 bg-red-600/80 hover:bg-red-600 text-white text-xs font-bold rounded transition-colors">
-                        SIGKILL Container
+                      <button 
+                        onClick={() => killContainerMutation.mutate(container.Id)} 
+                        disabled={killContainerMutation.isPending}
+                        className="mt-2 w-full py-1.5 bg-red-600/80 hover:bg-red-600 disabled:bg-zinc-600 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition-colors"
+                      >
+                        {killContainerMutation.isPending ? 'Killing...' : 'SIGKILL Container'}
                       </button>
                     </li>
                   ))}
