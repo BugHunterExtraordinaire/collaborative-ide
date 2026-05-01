@@ -71,6 +71,7 @@ app.post('/execute', async (req, res): Promise<void> => {
     container = await docker.createContainer({
       Image: dockerImg,
       Cmd: executionCmd,
+      Env: ["FORCE_COLOR=0"],
       Tty: true,
       HostConfig: {
         Memory: 128 * 1024 * 1024,
@@ -95,9 +96,13 @@ app.post('/execute', async (req, res): Promise<void> => {
     ]);
 
     clearTimeout(timer!);
-
     const logs = await container.logs({ stdout: true, stderr: true });
-    const output = logs.toString('utf8').trim();
+
+    const rawLogs = Buffer.isBuffer(logs) ? logs.toString('utf8') : String(logs);
+
+    const output = rawLogs.replace(/\x1b\[[0-9;]*m/g, "").trim();
+
+    res.status(200).json({ output });
 
     res.status(200).json({ output });
   } catch (error: any) {
