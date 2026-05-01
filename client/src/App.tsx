@@ -2,6 +2,7 @@ import * as Y from 'yjs';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
@@ -27,7 +28,6 @@ export default function App() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [language, setLanguage] = useState('javascript');
 
-  const [historyLogs, setHistoryLogs] = useState<HistoryLogArray>([]);
   const [playbackCode, setPlaybackCode] = useState<string>('Loading history...');
   const [isPlaybackMode, setIsPlaybackMode] = useState<boolean>(false);
   const [playbackIndex, setPlaybackIndex] = useState<number>(0);
@@ -58,21 +58,18 @@ export default function App() {
       setUser(JSON.parse(savedUser));
     }
   }, []);
+  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
 
-  useEffect(() => {
-    if (isPlaybackMode && currentRoom) {
-      const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-      axios.get(`http://localhost:${backendPort}/api/sessions/${currentRoom}/history`)
-        .then(res => {
-          setHistoryLogs(res.data);
-          setPlaybackIndex(Math.max(0, res.data.length - 1));
-        })
-        .catch(err => {
-          console.error("Failed to fetch history:", err);
-          setPlaybackCode("Error loading history.");
-        });
-    }
-  }, [isPlaybackMode, currentRoom]);
+  const { data: historyLogs = [] } = useQuery<HistoryLogArray>({
+    queryKey: ['session-history', currentRoom],
+    queryFn: async () => {
+      const res = await axios.get(`http://localhost:${backendPort}/api/sessions/${currentRoom}/history`);
+      setPlaybackIndex(Math.max(0, res.data.length - 1));
+      return res.data;
+    },
+    enabled: isPlaybackMode && !!currentRoom,
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
     if (!isPlaybackMode || historyLogs.length === 0) return;
@@ -109,7 +106,7 @@ export default function App() {
     setOutput('Spawning isolated container...\nExecuting...');
     try {
       const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
-      
+
       const response = await axios.post(`http://localhost:${backendPort}/api/execute`, { code, language });
       const resultOutput = response.data.output || 'Execution successful (No output)';
       setOutput(resultOutput);
@@ -149,8 +146,8 @@ export default function App() {
     <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
 
       <div className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900">
-        
-        <EditorToolbar 
+
+        <EditorToolbar
           currentRoom={currentRoom}
           language={language}
           setLanguage={setLanguage}
@@ -163,7 +160,7 @@ export default function App() {
         />
 
         {isPlaybackMode && (
-          <PlaybackScrubber 
+          <PlaybackScrubber
             historyLogs={historyLogs}
             playbackIndex={playbackIndex}
             setPlaybackIndex={setPlaybackIndex}
@@ -191,8 +188,8 @@ export default function App() {
       </div>
 
       <div className="w-2/5 flex flex-col bg-zinc-900">
-        
-        <TerminalPanel 
+
+        <TerminalPanel
           output={output}
           isRunning={isRunning}
           isPlaybackMode={isPlaybackMode}
