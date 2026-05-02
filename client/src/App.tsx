@@ -26,7 +26,6 @@ export default function App() {
   const [code, setCode] = useState<string>('');
   const [output, setOutput] = useState<string>('System Ready. Awaiting execution...');
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [language, setLanguage] = useState('javascript');
 
   const [playbackCode, setPlaybackCode] = useState<string>('Loading history...');
   const [isPlaybackMode, setIsPlaybackMode] = useState<boolean>(false);
@@ -70,6 +69,17 @@ export default function App() {
     enabled: isPlaybackMode && !!currentRoom,
     refetchOnWindowFocus: false,
   });
+
+  const { data: sessionDetails } = useQuery({
+    queryKey: ['session-details', currentRoom],
+    queryFn: async () => {
+      const res = await axios.get(`http://localhost:${backendPort}/api/sessions/${currentRoom}`);
+      return res.data;
+    },
+    enabled: !!currentRoom,
+  });
+
+  const language = sessionDetails?.language || 'javascript';
 
   useEffect(() => {
     if (!isPlaybackMode || historyLogs.length === 0) return;
@@ -150,7 +160,6 @@ export default function App() {
         <EditorToolbar
           currentRoom={currentRoom}
           language={language}
-          setLanguage={setLanguage}
           isPlaybackMode={isPlaybackMode}
           setIsPlaybackMode={setIsPlaybackMode}
           historyLength={historyLogs.length}
