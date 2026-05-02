@@ -33,8 +33,6 @@ const getSessions: DefaultController = async (req, res) => {
     .select('session_id name owner createdAt')
     .sort({ createdAt: -1 })
 
-  if (!sessions) throw new NotFoundError("No sessions were found.");
-
   res.status(200).json(sessions);
 }
 
