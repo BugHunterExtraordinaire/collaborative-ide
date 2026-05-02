@@ -55,7 +55,7 @@ export interface FormProps {
   createBtnText: string;
   joinTitle: string;
   joinBtnText: string;
-  onCreate: (name: string) => void;
+  onCreate: (name: string, language: string) => void;
   onJoin: (id: string) => void;
 }
 
@@ -81,7 +81,6 @@ export interface HistoryLog {
 export interface EditorToolbarProps {
   currentRoom: string;
   language: string;
-  setLanguage: (lang: string) => void;
   isPlaybackMode: boolean;
   setIsPlaybackMode: (mode: boolean) => void;
   historyLength: number;

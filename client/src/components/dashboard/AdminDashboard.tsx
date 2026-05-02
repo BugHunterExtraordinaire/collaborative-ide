@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { type DashboardProps, type DockerContainer } from '../../types/interfaces';
-import { type SessionsArray } from '../../types/arrays';
+import { type DashboardProps } from '../../types/interfaces';
+import type { SessionsArray, ContainerArray } from '../../types/arrays';
 import DashboardHeader from './shared/DashboardHeader';
 import SessionForms from './shared/SessionForms';
 import SessionList from './shared/SessionList';
@@ -18,7 +18,7 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout }: Dashboard
     }
   });
 
-  const { data: containers = [] } = useQuery<DockerContainer[]>({
+  const { data: containers = [] } = useQuery<ContainerArray>({
     queryKey: ['docker-containers'],
     queryFn: async () => {
       const res = await axios.get(`http://localhost:${backendPort}/api/system/containers`);
@@ -29,8 +29,8 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout }: Dashboard
   });
 
   const createSessionMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const res = await axios.post(`http://localhost:${backendPort}/api/sessions`, { name, owner: user.username });
+    mutationFn: async ({ name, language }: { name: string, language: string }) => {
+      const res = await axios.post(`http://localhost:${backendPort}/api/sessions`, { name, owner: user.username, language });
       return res.data;
     },
     onSuccess: (data) => {
@@ -72,7 +72,7 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout }: Dashboard
             <SessionForms 
               createTitle="Create Admin Session" createBtnText="Create Instance"
               joinTitle="Spy on Session" joinBtnText="Connect"
-              onCreate={(name) => createSessionMutation.mutate(name)} 
+              onCreate={(name, language) => createSessionMutation.mutate({ name, language })} 
               onJoin={onJoinRoom} 
             />
 
