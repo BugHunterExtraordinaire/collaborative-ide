@@ -117,7 +117,12 @@ export default function App() {
     try {
       const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
 
-      const response = await axios.post(`http://localhost:${backendPort}/api/execute`, { code, language });
+      const response = await axios.post(`http://localhost:${backendPort}/api/execute`, { 
+        code, 
+        language,
+        sessionId: currentRoom 
+      });
+      
       const resultOutput = response.data.output || 'Execution successful (No output)';
       setOutput(resultOutput);
 
