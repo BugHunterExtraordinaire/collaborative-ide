@@ -2,26 +2,25 @@ import { DefaultController } from "../types/express/functions";
 import crypto from 'crypto';
 import OperationLog from "../models/OperationLog";
 import Session from '../models/Session';
-import { ForbiddenError } from "../types/express/errors";
+import { ForbiddenError, NotFoundError } from "../types/express/errors";
 
 const createSession: DefaultController = async (req, res) => {
-  const { name, owner } = req.body;
+  const { name, owner, language } = req.body;
 
   const sessionId = crypto.randomBytes(4).toString('hex');
 
-  const newSession = new Session({
+  const session = await Session.create({
     session_id: sessionId,
     name: name || `Session-${sessionId}`,
     owner,
     participants: [owner],
+    language,
   });
 
-  await newSession.save();
-
-  res.status(201).json(newSession);
+  res.status(201).json(session);
 }
 
-const getSession: DefaultController = async (req, res) => {
+const getSessions: DefaultController = async (req, res) => {
 
   const { username } = req.query;
 
@@ -33,9 +32,22 @@ const getSession: DefaultController = async (req, res) => {
   })
     .select('session_id name owner createdAt')
     .sort({ createdAt: -1 })
-    .limit(10);
+
+  if (!sessions) throw new NotFoundError("No sessions were found.");
 
   res.status(200).json(sessions);
+}
+
+const getSession: DefaultController = async (req, res) => {
+  const { id } = req.params;
+
+  const session = await Session.findOne({
+    session_id: id
+  });
+
+  if (!session) throw new NotFoundError(`No sesssion with id: ${id}`);
+
+  res.status(200).json(session);
 }
 
 const getSessionHistory: DefaultController = async (req, res) => {
@@ -60,6 +72,7 @@ const deleteSession: DefaultController = async (req, res) => {
 
 export {
   createSession,
+  getSessions,
   getSession,
   getSessionHistory,
   deleteSession
