@@ -31,9 +31,9 @@ export default function SessionForms({ createTitle, createBtnText, joinTitle, jo
           value={language} onChange={(e) => setLanguage(e.target.value)}
           className="w-full p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
         >
-          <option value="javascript">JavaScript</option>
-          <option value="python">Python</option>
-          <option value="cpp">C++</option>
+          <option value="JavaScript">JavaScript</option>
+          <option value="Python">Python</option>
+          <option value="C++">C++</option>
         </select>
         <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 transition-colors text-white font-bold rounded shadow-lg">{createBtnText}</button>
       </form>
