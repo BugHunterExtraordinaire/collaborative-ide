@@ -29,8 +29,19 @@ interface IOperationLog extends Document {
   operation_data: Buffer;
 }
 
+interface IExecutionLog extends Document {
+  session_id: string;
+  username: string;
+  input: string;
+  output: string;
+  status: 'Success' | 'Error' | 'Timeout';
+  duration_ms: number;
+  createdAt: Date;
+}
+
 export {
   IUser,
   ISession,
-  IOperationLog
+  IOperationLog,
+  IExecutionLog,
 }

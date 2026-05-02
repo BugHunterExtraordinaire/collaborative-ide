@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import { applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
+import { Request, Response } from 'express';
 
 import connectDB from './database/connect';
 
@@ -21,6 +22,7 @@ import systemRouter from './routes/system';
 
 import Session from './models/Session';
 import OperationLog from './models/OperationLog';
+import ExecutionLog from './models/ExecutionLog';
 
 import { authenticateUser, handleError } from './middleware/';
 
@@ -45,16 +47,42 @@ app.use('/api/auth', authRouter);
 app.use('/api/sessions', sessionRouter);
 app.use('/api/system', systemRouter);
 
-app.post('/api/execute', authenticateUser, async (req, res) => {
+app.post('/api/execute', authenticateUser, async (req: Request, res: Response) => {
+  const { code, language, sessionId } = req.body;
   
+  const username = req.user?.username || 'Unknown'; 
+
+  const startTime = performance.now();
+  let finalOutput = '';
+  let execStatus = 'Success';
+
   try {
-    const runnerResponse = await axios.post('http://localhost:5000/execute', req.body);
+    const runnerResponse = await axios.post('http://localhost:5000/execute', { code, language });
     
+    finalOutput = runnerResponse.data.output;
     res.status(200).json(runnerResponse.data);
+
   } catch (error: any) {
     console.error('Execution proxy failed:', error.message);
-    const errorMsg = error.response?.data?.message || 'Execution service unavailable.';
-    res.status(500).json({ message: errorMsg });
+    
+    finalOutput = error.response?.data?.message || 'Execution service unavailable.';
+    execStatus = finalOutput.includes('timed out') ? 'Timeout' : 'Error';
+    
+    res.status(500).json({ message: finalOutput });
+
+  } finally {
+    const duration_ms = Math.round(performance.now() - startTime);
+
+    if (sessionId) {
+      ExecutionLog.create({
+        session_id: sessionId,
+        username: username,
+        input: code,
+        output: finalOutput,
+        status: execStatus,
+        duration_ms: duration_ms
+      }).catch(err => console.error('Failed to save ExecutionLog to MongoDB:', err));
+    }
   }
 });
 
