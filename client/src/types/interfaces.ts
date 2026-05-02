@@ -81,7 +81,6 @@ export interface HistoryLog {
 export interface EditorToolbarProps {
   currentRoom: string;
   language: string;
-  setLanguage: (lang: string) => void;
   isPlaybackMode: boolean;
   setIsPlaybackMode: (mode: boolean) => void;
   historyLength: number;

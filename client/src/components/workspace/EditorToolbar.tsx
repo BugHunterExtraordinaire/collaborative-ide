@@ -1,7 +1,7 @@
 import { type EditorToolbarProps } from '../../types/interfaces';
 
 export default function EditorToolbar({
-  currentRoom, language, setLanguage, isPlaybackMode, setIsPlaybackMode,
+  currentRoom, language, isPlaybackMode, setIsPlaybackMode,
   historyLength, setPlaybackIndex, user, onLeaveRoom
 }: EditorToolbarProps) {
   return (
@@ -11,16 +11,9 @@ export default function EditorToolbar({
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
           Collab-IDE <span className="text-zinc-400 text-sm font-mono">({currentRoom})</span>
         </h3>
-        <select
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          className="p-1.5 bg-zinc-700 text-white border-none outline-none rounded text-sm cursor-pointer hover:bg-zinc-600 transition-colors"
-          disabled={isPlaybackMode}
-        >
-          <option value="javascript">JavaScript</option>
-          <option value="python">Python 3</option>
-          <option value="cpp">C++</option>
-        </select>
+        <div className="px-3 py-1 bg-zinc-700/50 text-blue-400 border border-zinc-600 rounded text-xs font-bold uppercase tracking-wider">
+          {language}
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
