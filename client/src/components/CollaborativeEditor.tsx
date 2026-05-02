@@ -4,10 +4,12 @@ import { editor } from 'monaco-editor';
 import { type CollaborativeEditorProps } from '../types/interfaces';
 import { useCollabEngine } from './hooks/useCollabEngine';
 
-export default function CollaborativeEditor({ currentRoom, language, onCodeChange }: CollaborativeEditorProps) {
+export default function CollaborativeEditor({ currentRoom, language, currentUser, onCodeChange }: CollaborativeEditorProps) {
   const [editorInstance, setEditorInstance] = useState<editor.IStandaloneCodeEditor | null>(null);
   
   const { status } = useCollabEngine(currentRoom, editorInstance);
+
+  const isAdmin = currentUser.role === 'System Administrator';
 
   const handleEditorDidMount: OnMount = (editor) => {
     setEditorInstance(editor);
@@ -37,7 +39,8 @@ export default function CollaborativeEditor({ currentRoom, language, onCodeChang
             minimap: { enabled: false },
             fontSize: 14,
             wordWrap: 'on',
-            padding: { top: 16 }
+            padding: { top: 16 },
+            readOnly: isAdmin
           }}
         />
       </div>
