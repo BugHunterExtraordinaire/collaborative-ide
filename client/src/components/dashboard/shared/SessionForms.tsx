@@ -4,11 +4,12 @@ import type { FormProps } from '../../../types/interfaces';
 
 export default function SessionForms({ createTitle, createBtnText, joinTitle, joinBtnText, onCreate, onJoin }: FormProps) {
   const [newRoomName, setNewRoomName] = useState('');
+  const [language, setLanguage] = useState('JavaScript');
   const [joinId, setJoinId] = useState('');
 
   const handleCreate: React.SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
-    onCreate(newRoomName);
+    onCreate(newRoomName, language);
     setNewRoomName('');
   };
 
@@ -26,6 +27,14 @@ export default function SessionForms({ createTitle, createBtnText, joinTitle, jo
           type="text" placeholder="e.g., Session Name" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} required
           className="w-full p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
         />
+        <select 
+          value={language} onChange={(e) => setLanguage(e.target.value)}
+          className="w-full p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+        >
+          <option value="javascript">JavaScript</option>
+          <option value="python">Python</option>
+          <option value="cpp">C++</option>
+        </select>
         <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 transition-colors text-white font-bold rounded shadow-lg">{createBtnText}</button>
       </form>
 

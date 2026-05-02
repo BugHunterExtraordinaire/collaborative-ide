@@ -55,7 +55,7 @@ export interface FormProps {
   createBtnText: string;
   joinTitle: string;
   joinBtnText: string;
-  onCreate: (name: string) => void;
+  onCreate: (name: string, language: string) => void;
   onJoin: (id: string) => void;
 }
 
