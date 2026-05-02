@@ -12,12 +12,14 @@ import { authenticateUser } from '../middleware';
 
 const router = Router();
 
-router.post('/', authenticateUser, createSession);
+router.use(authenticateUser);
 
-router.get('/', authenticateUser, getSessions);
-router.get('/:id', authenticateUser, getSession);
-router.get('/:id/history', authenticateUser, getSessionHistory);
+router.route('/').get(getSessions)
+                 .post(createSession);
 
-router.delete('/:id', authenticateUser, deleteSession);
+router.route('/:id').get(getSession)
+                    .delete(deleteSession);
+
+router.get('/:id/history', getSessionHistory);
 
 export default router;
