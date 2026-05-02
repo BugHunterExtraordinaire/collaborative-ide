@@ -11,11 +11,12 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout }: Dashboard
   const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
 
   const { data: sessions = [] } = useQuery<SessionsArray>({
-    queryKey: ['sessions', user.username, user.role],
+    queryKey: ['sessions'],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:${backendPort}/api/sessions?username=${encodeURIComponent(user.username)}&role=${encodeURIComponent(user.role)}`);
+      const res = await axios.get(`http://localhost:${backendPort}/api/system/sessions`);
       return res.data;
-    }
+    },
+    refetchInterval: 5000
   });
 
   const { data: containers = [] } = useQuery<ContainerArray>({
