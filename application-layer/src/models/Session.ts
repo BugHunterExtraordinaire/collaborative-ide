@@ -18,6 +18,12 @@ const sessionSchema: mongoose.Schema = new mongoose.Schema({
   participants: [{
     type: String,
   }],
+  language: {
+    type: String,
+    enum: ["JavaScript", "Python", "C++"],
+    required: true,
+    default: "JavaScript",
+  },
   state: {
     type: Buffer,
   },
