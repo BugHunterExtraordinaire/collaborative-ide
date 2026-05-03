@@ -8,13 +8,13 @@ import { ForbiddenError, NotFoundError } from "../types/express/errors";
 const createSession: DefaultController = async (req, res) => {
   const { name, language } = req.body;
   const sessionId = crypto.randomBytes(4).toString('hex');
-  const owner = req.user?.username as string;
+  const userId = req.user?.userId;
 
   const session = await Session.create({
     sessionId: sessionId,
     name: name || `Session-${sessionId}`,
-    owner,
-    participants: [owner],
+    owner: userId,
+    participants: [userId as string],
     language,
   });
 
@@ -22,37 +22,46 @@ const createSession: DefaultController = async (req, res) => {
 }
 
 const getSessions: DefaultController = async (req, res) => {
-  const { username } = req.query;
+  const userId = req.user?.userId;
 
-  const sessions = await Session.find({
-    $or: [
-      { owner: username },
-      { participants: username }
-    ]
-  })
-    .select('sessionId name owner createdAt')
+  const sessions = await Session.find({ participants: userId })
+    .populate('owner', 'username') 
     .sort({ createdAt: -1 });
 
-  res.status(200).json(sessions);
+  const formattedSessions = sessions.map(session => ({
+    sessionId: session.sessionId,
+    name: session.name,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    owner: (session.owner as any).username, 
+    createdAt: session.created_at
+  }));
+
+  res.status(200).json(formattedSessions);
 }
 
 const getSession: DefaultController = async (req, res) => {
   const { id } = req.params;
+  const userId = req.user?.userId;
 
-  const session = await Session.findOne({
-    sessionId: id
-  });
+  const session = await Session.findOne({ sessionId: id });
 
-  if (!session) throw new NotFoundError(`No sesssion with id: ${id}`);
+  if (!session) throw new NotFoundError(`No session with id: ${id}`);
+
+  if (userId) {
+    const isParticipant = session.participants.some(p => p.toString() === userId);
+    if (!isParticipant) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      session.participants.push(userId as any);
+      await session.save();
+    }
+  }
 
   res.status(200).json(session);
 }
 
 const getSessionHistory: DefaultController = async (req, res) => {
   const { id } = req.params;
-
   const logs = await OperationLog.find({ sessionId: id }).sort({ timestamp: 1 });
-
   res.status(200).json(logs);
 }
 
@@ -76,6 +85,7 @@ const getSessionAnalytics: DefaultController = async (req, res) => {
 
   const executions = await ExecutionLog.find({ sessionId: id }).sort({ createdAt: -1 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const executionStats = executions.reduce((acc: any, log) => {
     if (!acc[log.username]) {
       acc[log.username] = { total: 0, success: 0, errors: 0 };

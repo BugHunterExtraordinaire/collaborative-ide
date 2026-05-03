@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { ISession } from "../types/mongoose/interfaces";
 
 const sessionSchema: mongoose.Schema = new mongoose.Schema({
@@ -12,11 +12,13 @@ const sessionSchema: mongoose.Schema = new mongoose.Schema({
     required: true
   },
   owner: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   participants: [{
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   }],
   language: {
     type: String,

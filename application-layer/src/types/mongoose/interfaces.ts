@@ -1,7 +1,7 @@
-import { Document } from "mongoose"
+import mongoose, { Document } from "mongoose"
 import jwt from "jsonwebtoken"
 
-interface IUser extends Document {
+export interface IUser extends Document {
   username: string;
   email: string;
   passwordHash: string;
@@ -11,11 +11,11 @@ interface IUser extends Document {
   generateJWT(payload: jwt.JwtPayload): string;
 }
 
-interface ISession extends Document {
+export interface ISession extends Document {
   sessionId: string;
   name: string;
-  owner: string;
-  participants: Array<string>;
+  owner: mongoose.Types.ObjectId;
+  participants: Array<mongoose.Types.ObjectId>;
   language: string;
   state: Buffer;
   chatHistory: Array<{ username: string; message: string; timestamp: Date }>;
@@ -23,13 +23,13 @@ interface ISession extends Document {
   updated_at: Date;
 }
 
-interface IOperationLog extends Document {
+export interface IOperationLog extends Document {
   sessionId: string;
   timestamp: Date;
   operationData: Buffer;
 }
 
-interface IExecutionLog extends Document {
+export interface IExecutionLog extends Document {
   sessionId: string;
   username: string;
   input: string;
@@ -37,11 +37,4 @@ interface IExecutionLog extends Document {
   status: 'Success' | 'Error' | 'Timeout';
   duration_ms: number;
   createdAt: Date;
-}
-
-export {
-  IUser,
-  ISession,
-  IOperationLog,
-  IExecutionLog,
 }
