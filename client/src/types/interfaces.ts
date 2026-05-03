@@ -1,3 +1,5 @@
+import * as Y from 'yjs';
+
 import { Socket } from 'socket.io-client';
 
 import type { SessionsArray, HistoryLogArray } from './arrays';
@@ -32,10 +34,12 @@ export interface DashboardProps {
 }
 
 export interface CollaborativeEditorProps {
-  currentRoom: string;
   language: string;
   currentUser: { username: string; role: string };
-  onCodeChange: (code: string) => void;
+  activeFile: string;
+  localDoc: Y.Doc | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  provider: any;
 }
 
 export interface DockerContainer {
@@ -117,4 +121,12 @@ export interface ChatInputProps {
   input: string;
   setInput: (val: string) => void;
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
+}
+
+export interface FileTabsProps {
+  files: Array<string>;
+  activeFile: string;
+  onSelectFile: (file: string) => void;
+  onAddFile: (fileName: string) => void;
+  isPlaybackMode: boolean;
 }
