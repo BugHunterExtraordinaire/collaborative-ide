@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { IOperationLog } from '../types/mongoose/interfaces';
 
 const OperationLogSchema: Schema = new Schema({
-  session_id: { 
+  sessionId: { 
     type: String, 
     required: true, 
     index: true 
@@ -11,7 +11,7 @@ const OperationLogSchema: Schema = new Schema({
     type: Date, 
     default: Date.now 
   },
-  operation_data: { 
+  operationData: { 
     type: Buffer, 
     required: true 
   }

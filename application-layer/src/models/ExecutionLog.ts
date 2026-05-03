@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { IExecutionLog } from '../types/mongoose/interfaces';
 
 const ExecutionLogSchema = new Schema({
-  session_id: { 
+  sessionId: { 
     type: String, 
     required: true 
   },

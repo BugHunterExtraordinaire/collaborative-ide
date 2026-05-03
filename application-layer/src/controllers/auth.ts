@@ -44,7 +44,7 @@ const registerUser: DefaultController = async (req, res) => {
   const user = await User.create({
     username,
     email,
-    password_hash: password,
+    passwordHash: password,
     role
   });
 

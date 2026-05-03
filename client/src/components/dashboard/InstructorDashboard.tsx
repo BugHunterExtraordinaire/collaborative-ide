@@ -23,7 +23,7 @@ export default function InstructorDashboard({ user, onJoinRoom, onLogout }: Dash
       return res.data;
     },
     onSuccess: (data) => {
-      onJoinRoom(data.session_id);
+      onJoinRoom(data.sessionId);
     }
   });
 

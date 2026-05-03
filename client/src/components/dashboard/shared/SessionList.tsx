@@ -15,7 +15,7 @@ export default function SessionList({ title, sessions, currentUser, joinBtnText,
       ) : (
         <ul className="list-none p-0 m-0 flex flex-col gap-3 overflow-y-auto pr-2">
           {sessions.map(session => (
-            <li key={session.session_id} className="p-4 bg-zinc-800/50 hover:bg-zinc-800 transition-colors rounded-lg flex justify-between items-center border border-zinc-800/50 group">
+            <li key={session.sessionId} className="p-4 bg-zinc-800/50 hover:bg-zinc-800 transition-colors rounded-lg flex justify-between items-center border border-zinc-800/50 group">
               <div>
                 <div className="font-bold text-lg text-white flex items-center gap-2">
                   {session.name}
@@ -26,15 +26,15 @@ export default function SessionList({ title, sessions, currentUser, joinBtnText,
                     <span className="text-[10px] font-normal text-zinc-400 bg-zinc-700 px-1.5 py-0.5 rounded">Owner: {session.owner}</span>
                   )}
                 </div>
-                <div className="text-xs text-zinc-400 font-mono mt-1 select-all">ID: {session.session_id}</div>
+                <div className="text-xs text-zinc-400 font-mono mt-1 select-all">ID: {session.sessionId}</div>
               </div>
               
               <div className="flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                <button onClick={() => onJoin(session.session_id)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm rounded font-medium shadow">
+                <button onClick={() => onJoin(session.sessionId)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm rounded font-medium shadow">
                   {joinBtnText}
                 </button>
                 {(isAdmin || (session.owner === currentUser.username)) && onDelete && (
-                  <button onClick={() => onDelete(session.session_id)} className="px-3 py-2 bg-red-600 hover:bg-red-700 transition-colors text-white text-sm rounded font-medium shadow">
+                  <button onClick={() => onDelete(session.sessionId)} className="px-3 py-2 bg-red-600 hover:bg-red-700 transition-colors text-white text-sm rounded font-medium shadow">
                     Delete
                   </button>
                 )}

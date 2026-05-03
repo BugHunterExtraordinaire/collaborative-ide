@@ -74,8 +74,8 @@ export interface ListProps {
 
 export interface HistoryLog {
   _id: string;
-  session_id: string;
-  operation_data: {
+  sessionId: string;
+  operationData: {
     type: 'Buffer';
     data: Array<number>;
   };

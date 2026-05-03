@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { ISession } from "../types/mongoose/interfaces";
 
 const sessionSchema: mongoose.Schema = new mongoose.Schema({
-  session_id: {
+  sessionId: {
     type: String,
     required: true,
     unique: true,
@@ -27,7 +27,7 @@ const sessionSchema: mongoose.Schema = new mongoose.Schema({
   state: {
     type: Buffer,
   },
-  chat_history: [{
+  chatHistory: [{
     username: { type: String },
     message: { type: String },
     timestamp: { type: Date, default: Date.now }

@@ -35,7 +35,7 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout }: Dashboard
       return res.data;
     },
     onSuccess: (data) => {
-      onJoinRoom(data.session_id);
+      onJoinRoom(data.sessionId);
     }
   });
 

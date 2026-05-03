@@ -14,7 +14,7 @@ const userSchema: mongoose.Schema = new mongoose.Schema({
     required: true, 
     unique: true,
   },
-  password_hash: { 
+  passwordHash: { 
     type: String, 
     required: true,
   },
@@ -31,11 +31,11 @@ const userSchema: mongoose.Schema = new mongoose.Schema({
 
 userSchema.pre('save', async function(this: IUser) {
   const salt = await bcryptjs.genSalt(12);
-  this.password_hash = await bcryptjs.hash(this.password_hash, salt);
+  this.passwordHash = await bcryptjs.hash(this.passwordHash, salt);
 });
 
 userSchema.method('verifyPassword', async function(this: IUser, password) {
-  return await bcryptjs.compare(password, this.password_hash);
+  return await bcryptjs.compare(password, this.passwordHash);
 });
 
 userSchema.method('generateJWT', function(payload: JwtPayload) {

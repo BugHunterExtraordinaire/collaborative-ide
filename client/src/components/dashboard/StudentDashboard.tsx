@@ -23,7 +23,7 @@ export default function StudentDashboard({ user, onJoinRoom, onLogout }: Dashboa
       return res.data;
     },
     onSuccess: (data) => {
-      onJoinRoom(data.session_id);
+      onJoinRoom(data.sessionId);
     }
   });
 

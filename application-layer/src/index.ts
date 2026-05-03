@@ -71,7 +71,7 @@ app.post('/api/execute', authenticateUser, async (req: Request, res: Response) =
     const duration_ms = Math.round(performance.now() - startTime);
     if (sessionId) {
       ExecutionLog.create({
-        session_id: sessionId,
+        sessionId: sessionId,
         username: username,
         input: JSON.stringify(files), 
         output: finalOutput,
@@ -169,14 +169,14 @@ wss.on('connection', (ws: WebSocket, req: any) => {
       if (origin !== 'db-load') {
         try {
           await Session.findOneAndUpdate(
-            { session_id: docName },
+            { sessionId: docName },
             { state: fullStateBuffer },
             { upsert: true }
           );
 
           await OperationLog.create({
-            session_id: docName,
-            operation_data: updateDeltaBuffer
+            sessionId: docName,
+            operationData: updateDeltaBuffer
           });
         } catch (saveErr) {
           console.error('Error saving keystroke to MongoDB:', saveErr);
@@ -200,7 +200,7 @@ wss.on('connection', (ws: WebSocket, req: any) => {
       });
     }
 
-    Session.findOne({ session_id: docName }).then(session => {
+    Session.findOne({ sessionId: docName }).then(session => {
       if (session && session.state) {
         Y.applyUpdate(ydoc, new Uint8Array(session.state), 'db-load');
         console.log(`Loaded historical state for session: ${docName}`);
@@ -218,10 +218,10 @@ io.on('connection', (socket: Socket) => {
     socket.join(sessionId);
 
     try {
-      const session = await Session.findOne({ session_id: sessionId });
+      const session = await Session.findOne({ sessionId: sessionId });
       
-      if (session && session.chat_history) {
-        socket.emit('chat-history', session.chat_history);
+      if (session && session.chatHistory) {
+        socket.emit('chat-history', session.chatHistory);
       } else {
         socket.emit('chat-history', []);
       }
@@ -254,7 +254,7 @@ io.on('connection', (socket: Socket) => {
 
     try {
       await Session.findOneAndUpdate(
-        { session_id: sessionId },
+        { sessionId: sessionId },
         { 
           $push: { 
             chatHistory: { username, message, timestamp } 

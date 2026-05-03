@@ -5,7 +5,8 @@ import {
   deleteSession, 
   getSessions,
   getSession, 
-  getSessionHistory 
+  getSessionHistory,
+  getSessionAnalytics
 } from '../controllers/session';
 
 import { authenticateUser } from '../middleware';
@@ -21,5 +22,7 @@ router.route('/:id').get(getSession)
                     .delete(deleteSession);
 
 router.get('/:id/history', getSessionHistory);
+
+router.get('/:id/analytics', getSessionAnalytics);
 
 export default router;

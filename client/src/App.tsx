@@ -134,8 +134,8 @@ export default function App() {
     const tempText = tempDoc.getText(safeActiveFile);
     for (let i = 0; i <= playbackIndex; i++) {
       const log = historyLogs[i];
-      if (log && log.operation_data && log.operation_data.data) {
-        const updateBuffer = new Uint8Array(log.operation_data.data);
+      if (log && log.operationData && log.operationData.data) {
+        const updateBuffer = new Uint8Array(log.operationData.data);
         Y.applyUpdate(tempDoc, updateBuffer);
       }
     }
