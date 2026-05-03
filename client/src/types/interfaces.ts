@@ -141,3 +141,11 @@ export interface ExecutionStats {
   success: number;
   errors: number;
 }
+
+export interface AwarenessState {
+  user?: {
+    name: string;
+    color: string;
+  };
+  [key: string]: unknown;
+}
