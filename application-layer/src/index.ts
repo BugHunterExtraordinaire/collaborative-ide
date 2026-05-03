@@ -48,36 +48,32 @@ app.use('/api/sessions', sessionRouter);
 app.use('/api/system', systemRouter);
 
 app.post('/api/execute', authenticateUser, async (req: Request, res: Response) => {
-  const { code, language, sessionId } = req.body;
+  const { files, language, sessionId } = req.body; 
   
   const username = req.user?.username || 'Unknown'; 
-
   const startTime = performance.now();
   let finalOutput = '';
   let execStatus = 'Success';
 
   try {
-    const runnerResponse = await axios.post('http://localhost:5000/execute', { code, language });
+    const runnerResponse = await axios.post('http://localhost:5000/execute', { files, language });
     
     finalOutput = runnerResponse.data.output;
     res.status(200).json(runnerResponse.data);
 
   } catch (error: any) {
     console.error('Execution proxy failed:', error.message);
-    
     finalOutput = error.response?.data?.message || 'Execution service unavailable.';
     execStatus = finalOutput.includes('timed out') ? 'Timeout' : 'Error';
-    
     res.status(500).json({ message: finalOutput });
 
   } finally {
     const duration_ms = Math.round(performance.now() - startTime);
-
     if (sessionId) {
       ExecutionLog.create({
         session_id: sessionId,
         username: username,
-        input: code,
+        input: JSON.stringify(files), 
         output: finalOutput,
         status: execStatus,
         duration_ms: duration_ms
@@ -237,7 +233,17 @@ io.on('connection', (socket: Socket) => {
   });
 
   socket.on('instructor-execution', (data: { sessionId: string, output: string }) => {
-    socket.to(data.sessionId).emit('receive-execution', data.output);
+    socket.to(data.sessionId).emit('receive-execution', { 
+      sessionId: data.sessionId, 
+      output: data.output 
+    });
+  });
+
+  socket.on('student-execution', (data: { sessionId: string, output: string }) => {
+    socket.to(data.sessionId).emit('receive-execution', { 
+      sessionId: data.sessionId, 
+      output: data.output 
+    });
   });
 
   socket.on('send-message', async (data) => {

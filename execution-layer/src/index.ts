@@ -3,6 +3,8 @@ import Docker from 'dockerode';
 import cors from 'cors';
 import helmet from 'helmet';
 
+import { ExecutionRequest } from './types/interfaces';
+
 const app = express();
 const port = process.env.PORT || 5000;
 const docker = new Docker();
@@ -13,11 +15,6 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
-
-interface ExecutionRequest {
-  code: string;
-  language: 'python' | 'cpp' | 'javascript';
-}
 
 async function ensureImageExists(docker: Docker, imageName: string): Promise<void> {
   try {
@@ -38,26 +35,32 @@ async function ensureImageExists(docker: Docker, imageName: string): Promise<voi
 }
 
 app.post('/execute', async (req, res): Promise<void> => {
-  const { code, language } = req.body as ExecutionRequest;
+  const { files, language } = req.body as ExecutionRequest;
 
-  if (!code || !language) {
-    res.status(400).json({ message: "Error: please provide both code and language." });
+  if (!files || files.length === 0 || !language) {
+    res.status(400).json({ message: "Error: please provide files and language." });
     return;
   }
 
   let dockerImg: string = "";
   let executionCmd: Array<string> = [];
 
+  const fileCreationCmds = files.map(f => {
+    const b64 = Buffer.from(f.content).toString('base64');
+    return `echo '${b64}' | base64 -d > ${f.name}`;
+  }).join(' && ');
+
+  const mainFile = files.find(f => f.name.startsWith('main'))?.name || files[0].name;
+
   if (language === 'python') {
     dockerImg = 'python:3.9-alpine';
-    executionCmd = ['python', '-c', code];
+    executionCmd = ['sh', '-c', `${fileCreationCmds} && python ${mainFile}`];
   } else if (language === 'javascript') {
     dockerImg = 'node:18-alpine';
-    executionCmd = ['node', '-e', code];
-  } else if (language === 'cpp') {
+    executionCmd = ['sh', '-c', `${fileCreationCmds} && node ${mainFile}`];
+  } else if (language === 'c++') {
     dockerImg = 'frolvlad/alpine-gxx';
-    const base64Code = Buffer.from(code).toString('base64');
-    executionCmd = ['sh', '-c', `echo '${base64Code}' | base64 -d > main.cpp && g++ main.cpp -o main && ./main`];
+    executionCmd = ['sh', '-c', `${fileCreationCmds} && g++ *.cpp -o main && ./main`];
   } else {
     res.status(400).json({ message: "Error: Unsupported language." });
     return;
@@ -99,10 +102,7 @@ app.post('/execute', async (req, res): Promise<void> => {
     const logs = await container.logs({ stdout: true, stderr: true });
 
     const rawLogs = Buffer.isBuffer(logs) ? logs.toString('utf8') : String(logs);
-
     const output = rawLogs.replace(/\x1b\[[0-9;]*m/g, "").trim();
-
-    res.status(200).json({ output });
 
     res.status(200).json({ output });
   } catch (error: any) {
@@ -132,7 +132,6 @@ app.get('/containers', async (req, res): Promise<void> => {
   }
 });
 
-
 app.delete('/containers/:id', async (req, res): Promise<void> => {
   try {
     const container = docker.getContainer(req.params.id);
@@ -144,5 +143,4 @@ app.delete('/containers/:id', async (req, res): Promise<void> => {
   }
 });
 
-
-app.listen(port, () => console.log(`Runner Service listening on http://localhost:${port}`)); 
+app.listen(port, () => console.log(`Runner Service listening on http://localhost:${port}`));
