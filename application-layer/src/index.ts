@@ -58,14 +58,23 @@ app.post('/api/execute', authenticateUser, async (req: Request, res: Response) =
   try {
     const runnerResponse = await axios.post('http://localhost:5000/execute', { files, language });
     
-    finalOutput = runnerResponse.data.output;
+    finalOutput = runnerResponse.data.output || '';
+    
+    if (runnerResponse.data.status && runnerResponse.data.status !== 'Success') {
+      execStatus = runnerResponse.data.status;
+    } else if (runnerResponse.data.error || runnerResponse.data.stderr || /Traceback|Error:|Exception|ReferenceError|SyntaxError/i.test(finalOutput)) {
+      execStatus = 'Error';
+    }
+
     res.status(200).json(runnerResponse.data);
 
   } catch (error: any) {
     console.error('Execution proxy failed:', error.message);
-    finalOutput = error.response?.data?.message || 'Execution service unavailable.';
+    
+    finalOutput = error.response?.data?.output || error.response?.data?.message || 'Execution service unavailable.';
     execStatus = finalOutput.includes('timed out') ? 'Timeout' : 'Error';
-    res.status(500).json({ message: finalOutput });
+    
+    res.status(error.response?.status || 500).json({ output: finalOutput, status: execStatus });
 
   } finally {
     const duration_ms = Math.round(performance.now() - startTime);

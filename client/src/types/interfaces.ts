@@ -130,3 +130,14 @@ export interface FileTabsProps {
   onAddFile: (fileName: string) => void;
   isPlaybackMode: boolean;
 }
+
+export interface AnalyticsModalProps {
+  currentRoom: string;
+  onClose: () => void;
+}
+
+export interface ExecutionStats {
+  total: number;
+  success: number;
+  errors: number;
+}

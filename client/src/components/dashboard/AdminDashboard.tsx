@@ -31,7 +31,7 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout }: Dashboard
 
   const createSessionMutation = useMutation({
     mutationFn: async ({ name, language }: { name: string, language: string }) => {
-      const res = await axios.post(`http://localhost:${backendPort}/api/sessions`, { name, owner: user.username, language });
+      const res = await axios.post(`http://localhost:${backendPort}/api/sessions`, { name, language });
       return res.data;
     },
     onSuccess: (data) => {

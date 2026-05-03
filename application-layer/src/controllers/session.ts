@@ -6,9 +6,9 @@ import Session from '../models/Session';
 import { ForbiddenError, NotFoundError } from "../types/express/errors";
 
 const createSession: DefaultController = async (req, res) => {
-  const { name, owner, language } = req.body;
-
+  const { name, language } = req.body;
   const sessionId = crypto.randomBytes(4).toString('hex');
+  const owner = req.user?.username as string;
 
   const session = await Session.create({
     sessionId: sessionId,
@@ -22,7 +22,6 @@ const createSession: DefaultController = async (req, res) => {
 }
 
 const getSessions: DefaultController = async (req, res) => {
-
   const { username } = req.query;
 
   const sessions = await Session.find({
@@ -32,7 +31,7 @@ const getSessions: DefaultController = async (req, res) => {
     ]
   })
     .select('sessionId name owner createdAt')
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: -1 });
 
   res.status(200).json(sessions);
 }
@@ -70,7 +69,6 @@ const deleteSession: DefaultController = async (req, res) => {
 }
 
 const getSessionAnalytics: DefaultController = async (req, res) => {
-
   const { id } = req.params;
 
   const session = await Session.findOne({ sessionId: id });
