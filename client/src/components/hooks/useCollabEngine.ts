@@ -19,7 +19,7 @@ export function useCollabEngine(currentRoom: string, editorInstance: editor.ISta
     const localText = localDoc.getText('monaco');
     const networkDoc = new Y.Doc();
 
-    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+    const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
 
     const provider = new WebsocketProvider(
       `ws://localhost:${backendPort}`,

@@ -7,7 +7,7 @@ import SessionForms from './shared/SessionForms';
 import SessionList from './shared/SessionList';
 
 export default function InstructorDashboard({ user, onJoinRoom, onLogout }: DashboardProps) {
-  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+  const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
 
   const { data: sessions = [] } = useQuery<SessionsArray>({
     queryKey: ['sessions', user.username, user.role],

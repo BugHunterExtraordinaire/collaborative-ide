@@ -36,7 +36,7 @@ export default function App() {
 
   useEffect(() => {
     if (currentRoom && user) {
-      const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+      const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
       const newSocket = io(`http://localhost:${backendPort}`);
       setSocket(newSocket);
 
@@ -57,7 +57,7 @@ export default function App() {
       setUser(JSON.parse(savedUser));
     }
   }, []);
-  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+  const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
 
   const { data: historyLogs = [] } = useQuery<HistoryLogArray>({
     queryKey: ['session-history', currentRoom],
@@ -101,7 +101,7 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+    const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
     try {
       await axios.post(`http://localhost:${backendPort}/api/auth/logout`);
     } catch (error) {
@@ -115,7 +115,7 @@ export default function App() {
     setIsRunning(true);
     setOutput('Spawning isolated container...\nExecuting...');
     try {
-      const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+      const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
 
       const response = await axios.post(`http://localhost:${backendPort}/api/execute`, { 
         code, 

@@ -1,5 +1,6 @@
 import { UnauthenticatedError } from "../types/express/errors";
 import { DefaultMiddleware } from "../types/express/functions";
+import { UserPayload } from "../types/express";
 import jwt from 'jsonwebtoken';
 
 const authenticateUser: DefaultMiddleware = async (req, res, next) => {

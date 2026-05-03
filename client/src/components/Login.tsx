@@ -5,7 +5,7 @@ import RegisterForm from './auth/RegisterForm';
 
 export default function Login({ onLoginSuccess }: LoginProps) {
   const [isRegistering, setIsRegistering] = useState(false);
-  const backendPort = new URLSearchParams(window.location.search).get('port') || '4000';
+  const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
 
   return (
     <div className="flex justify-center items-center h-screen bg-black text-white font-sans">
