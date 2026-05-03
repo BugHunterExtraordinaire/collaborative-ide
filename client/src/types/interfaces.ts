@@ -149,3 +149,13 @@ export interface AwarenessState {
   };
   [key: string]: unknown;
 }
+
+export interface ActiveUser {
+  clientId: number;
+  state: AwarenessState;
+}
+
+export interface BlameRecord {
+  name: string;
+  color: string;
+}
