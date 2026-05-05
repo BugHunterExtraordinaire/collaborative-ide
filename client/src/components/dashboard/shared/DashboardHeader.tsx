@@ -5,7 +5,6 @@ export default function DashboardHeader({ user, onLogout }: HeaderProps) {
     user.role === 'System Administrator' ? 'bg-red-600/20 text-red-500 border-red-500/50' : 
     user.role === 'Instructor' ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/50' : 
     'bg-green-500/20 text-green-500 border-green-500/50';
-
   return (
     <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4 border-b border-zinc-800 pb-6">
       <h2 className="text-3xl font-bold flex items-center gap-3">

@@ -40,9 +40,8 @@ export default function App() {
 
   useEffect(() => {
     if (currentRoom && user) {
-      const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
       
-      const newSocket = io(`http://localhost:${backendPort}`, { forceNew: true });
+      const newSocket = io("http://localhost:80", { forceNew: true });
       setSocket(newSocket);
 
       newSocket.on('receive-execution', (data: { sessionId: string, output: string }) => {
@@ -66,12 +65,10 @@ export default function App() {
     }
   }, []);
 
-  const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
-
   const { data: historyLogs = [] } = useQuery<HistoryLogArray>({
     queryKey: ['session-history', currentRoom],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:${backendPort}/api/sessions/${currentRoom}/history`);
+      const res = await axios.get(`http://localhost:80/api/v1/sessions/${currentRoom}/history`);
       setPlaybackIndex(Math.max(0, res.data.length - 1));
       return res.data;
     },
@@ -82,7 +79,7 @@ export default function App() {
   const { data: sessionDetails, isSuccess: isSessionLoaded } = useQuery({
     queryKey: ['session-details', currentRoom],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:${backendPort}/api/sessions/${currentRoom}`);
+      const res = await axios.get(`http://localhost:80/api/v1/sessions/${currentRoom}`);
       return res.data;
     },
     enabled: !!currentRoom,
@@ -149,7 +146,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await axios.post(`http://localhost:${backendPort}/api/auth/logout`);
+      await axios.post("http://localhost:80/api/v1/auth/logout");
     } catch (error) {
       console.error("Logout failed", error);
     }
@@ -179,7 +176,7 @@ export default function App() {
         content: localDoc.getText(fileName).toString()
       }));
 
-      const response = await axios.post(`http://localhost:${backendPort}/api/execute`, { 
+      const response = await axios.post("http://localhost:80/api/v1/execute", { 
         files: filesPayload, 
         language,
         sessionId: currentRoom 
@@ -209,6 +206,13 @@ export default function App() {
         socket.emit('instructor-execution', {
           sessionId: currentRoom,
           output: `[Instructor Broadcast Failed]:\n${errorMsg}`
+        });
+      }
+
+      if (user?.role === 'Student' && socket) {
+        socket.emit('student-execution', {
+          sessionId: currentRoom,
+          output: `[${user?.username} Broadcast Failed]:\n${errorMsg}`
         });
       }
     } finally {

@@ -19,10 +19,8 @@ export function useCollabEngine(currentRoom: string | null) {
     const newLocalDoc = new Y.Doc();
     const networkDoc = new Y.Doc();
 
-    const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
-    
     const newProvider = new WebsocketProvider(
-      `ws://localhost:${backendPort}`,
+      "ws://localhost:80",
       `yjs/${currentRoom}`,
       networkDoc
     );

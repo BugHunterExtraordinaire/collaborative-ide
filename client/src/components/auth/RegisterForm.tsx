@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { type AuthenticationProps } from '../../types/interfaces';
 
-export default function RegisterForm({ backendPort, onSuccess, onToggleMode }: AuthenticationProps) {
+export default function RegisterForm({ onSuccess, onToggleMode }: AuthenticationProps) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,8 +15,8 @@ export default function RegisterForm({ backendPort, onSuccess, onToggleMode }: A
     e.preventDefault();
     setError('');
     try {
-      await axios.post(`http://localhost:${backendPort}/api/auth/register`, { username, email, password, role });
-      const loginRes = await axios.post(`http://localhost:${backendPort}/api/auth/login`, { email, password });
+      await axios.post("http://localhost:80/api/v1/auth/register", { username, email, password, role });
+      const loginRes = await axios.post("http://localhost:80/api/v1/auth/login", { email, password });
       onSuccess(loginRes.data.user);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {

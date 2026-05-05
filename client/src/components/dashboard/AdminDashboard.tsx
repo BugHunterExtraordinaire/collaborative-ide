@@ -1,67 +1,35 @@
 import axios from 'axios';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { type DashboardProps } from '../../types/interfaces';
-import type { SessionsArray, ContainerArray } from '../../types/arrays';
+
 import DashboardHeader from './shared/DashboardHeader';
 import SessionForms from './shared/SessionForms';
 import SessionList from './shared/SessionList';
 
-export default function AdminDashboard({ user, onJoinRoom, onLogout }: DashboardProps) {
-  const queryClient = useQueryClient();
-  const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
+import type { UserDashboardProps } from '../../types/interfaces';
+import type { ContainerArray } from '../../types/arrays';
 
-  const { data: sessions = [] } = useQuery<SessionsArray>({
-    queryKey: ['sessions'],
-    queryFn: async () => {
-      const res = await axios.get(`http://localhost:${backendPort}/api/system/sessions`);
-      return res.data;
-    },
-    refetchInterval: 5000
-  });
+export default function AdminDashboard({ user, onJoinRoom, onLogout, handleDeleteSession, handleCreateSession, sessions }: UserDashboardProps) {
+  const queryClient = useQueryClient();
 
   const { data: containers = [] } = useQuery<ContainerArray>({
     queryKey: ['docker-containers'],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:${backendPort}/api/system/containers`);
+      const res = await axios.get("http://localhost:80/api/v1/system/containers");
       return res.data;
     },
     refetchInterval: 5000,
     enabled: user.role === 'System Administrator'
   });
 
-  const createSessionMutation = useMutation({
-    mutationFn: async ({ name, language }: { name: string, language: string }) => {
-      const res = await axios.post(`http://localhost:${backendPort}/api/sessions`, { name, language });
-      return res.data;
-    },
-    onSuccess: (data) => {
-      onJoinRoom(data.sessionId);
-    }
-  });
-
-  const deleteSessionMutation = useMutation({
-    mutationFn: async (sessionId: string) => {
-      await axios.delete(`http://localhost:${backendPort}/api/sessions/${sessionId}`, { data: { role: user.role } });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sessions'] }); 
-    }
-  });
-
   const killContainerMutation = useMutation({
     mutationFn: async (containerId: string) => {
-      await axios.delete(`http://localhost:${backendPort}/api/system/containers/${containerId}`);
+      await axios.delete(`http://localhost:80/api/v1/system/containers/${containerId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker-containers'] });
     }
   });
-
-  const handleDeleteSession = (sessionId: string) => {
-    if (window.confirm(`WARNING: This will permanently delete session ${sessionId}. Continue?`)) {
-      deleteSessionMutation.mutate(sessionId);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-black p-10 text-white font-sans overflow-y-auto">
@@ -73,7 +41,7 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout }: Dashboard
             <SessionForms 
               createTitle="Create Admin Session" createBtnText="Create Instance"
               joinTitle="Spy on Session" joinBtnText="Connect"
-              onCreate={(name, language) => createSessionMutation.mutate({ name, language })} 
+              onCreate={handleCreateSession} 
               onJoin={onJoinRoom} 
             />
 

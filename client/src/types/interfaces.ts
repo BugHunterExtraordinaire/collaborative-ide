@@ -5,6 +5,7 @@ import { Socket } from 'socket.io-client';
 import type { SessionsArray, HistoryLogArray } from './arrays';
 
 export interface UserObject {
+  userId: string;
   username: string;
   role: string;
 }
@@ -28,14 +29,23 @@ export interface Message {
 }
 
 export interface DashboardProps {
-  user: { username: string; role: string };
+  user: UserObject;
   onJoinRoom: (sessionId: string) => void;
   onLogout: () => void;
 }
 
+export interface UserDashboardProps {
+  user: UserObject;
+  onJoinRoom: (sessionId: string) => void;
+  onLogout: () => void;
+  handleDeleteSession: (sessionId: string) => void;
+  handleCreateSession: (name: string, language: string) => void;
+  sessions: SessionsArray; 
+}
+
 export interface CollaborativeEditorProps {
   language: string;
-  currentUser: { username: string; role: string };
+  currentUser: UserObject;
   activeFile: string;
   localDoc: Y.Doc | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -69,7 +79,7 @@ export interface ListProps {
   currentUser: UserObject;
   joinBtnText: string;
   onJoin: (id: string) => void;
-  onDelete?: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export interface HistoryLog {
@@ -107,7 +117,6 @@ export interface TerminalPanelProps {
 }
 
 export interface AuthenticationProps {
-  backendPort: string;
   onSuccess: (user: UserObject) => void;
   onToggleMode: () => void;
 }
@@ -158,4 +167,12 @@ export interface ActiveUser {
 export interface BlameRecord {
   name: string;
   color: string;
+}
+
+export interface SessionObject {
+  sessionId: string;
+  name: string;
+  owner: string;
+  ownerId: string;
+  createdAt: Date;
 }

@@ -1,16 +1,12 @@
-import type { DockerContainer, HistoryLog } from "./interfaces";
+import type { DockerContainer, HistoryLog, SessionObject } from "./interfaces";
 
 export type ChatHistoryArray = Array<{
   username: string;
   message: string;
-  timestamp: Date
+  timestamp: Date;
 }>;
 
-export type SessionsArray = Array<{
-  sessionId: string;
-  name: string;
-  owner: string;
-}>;
+export type SessionsArray = Array<SessionObject>;
 
 export type ContainerArray = Array<DockerContainer>;
 

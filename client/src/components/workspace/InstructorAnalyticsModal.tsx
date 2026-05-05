@@ -3,12 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import type { AnalyticsModalProps, ExecutionStats } from '../../types/interfaces';
 
 export default function InstructorAnalyticsModal({ currentRoom, onClose }: AnalyticsModalProps) {
-  const backendPort = new URLSearchParams(window.location.search).get('port') || '80';
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['session-analytics', currentRoom],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:${backendPort}/api/sessions/${currentRoom}/analytics`);
+      const res = await axios.get(`http://localhost:80/api/v1/sessions/${currentRoom}/analytics`);
       return res.data;
     },
     enabled: !!currentRoom,

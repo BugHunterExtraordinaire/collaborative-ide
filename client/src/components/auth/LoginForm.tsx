@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { type AuthenticationProps } from '../../types/interfaces';
 
-export default function LoginForm({ backendPort, onSuccess, onToggleMode }: AuthenticationProps) {
+export default function LoginForm({ onSuccess, onToggleMode }: AuthenticationProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -13,7 +13,7 @@ export default function LoginForm({ backendPort, onSuccess, onToggleMode }: Auth
     e.preventDefault();
     setError('');
     try {
-      const res = await axios.post(`http://localhost:${backendPort}/api/auth/login`, { email, password });
+      const res = await axios.post("http://localhost:80/api/v1/auth/login", { email, password });
       onSuccess(res.data.user);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
