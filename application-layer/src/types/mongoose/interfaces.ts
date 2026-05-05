@@ -35,7 +35,7 @@ export interface IExecutionLog extends Document {
   username: string;
   input: string;
   output: string;
-  status: 'Success' | 'Error' | 'Timeout';
+  status: string;
   duration_ms: number;
   createdAt: Date;
   updatedAt: Date;

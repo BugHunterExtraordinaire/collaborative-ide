@@ -43,11 +43,11 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/api/auth', authRouter);
-app.use('/api/sessions', sessionRouter);
-app.use('/api/system', systemRouter);
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/sessions', sessionRouter);
+app.use('/api/v1/system', systemRouter);
 
-app.post('/api/execute', authenticateUser, async (req: Request, res: Response) => {
+app.post('/api/v1/execute', authenticateUser, async (req: Request, res: Response) => {
   const { files, language, sessionId } = req.body; 
   
   const username = req.user?.username || 'Unknown'; 
