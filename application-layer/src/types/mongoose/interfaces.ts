@@ -6,7 +6,8 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   role: 'Student' | 'Instructor';
-  created_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   verifyPassword(password: string): Promise<boolean>;
   generateJWT(payload: jwt.JwtPayload): string;
 }
@@ -19,8 +20,8 @@ export interface ISession extends Document {
   language: string;
   state: Buffer;
   chatHistory: Array<{ username: string; message: string; timestamp: Date }>;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IOperationLog extends Document {
@@ -37,4 +38,5 @@ export interface IExecutionLog extends Document {
   status: 'Success' | 'Error' | 'Timeout';
   duration_ms: number;
   createdAt: Date;
+  updatedAt: Date;
 }

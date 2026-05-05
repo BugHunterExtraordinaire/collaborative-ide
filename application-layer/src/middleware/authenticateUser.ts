@@ -1,7 +1,8 @@
+import jwt from 'jsonwebtoken';
+
 import { UnauthenticatedError } from "../types/express/errors";
 import { DefaultMiddleware } from "../types/express/functions";
 import { UserPayload } from "../types/express";
-import jwt from 'jsonwebtoken';
 
 const authenticateUser: DefaultMiddleware = async (req, res, next) => {
   const token = req.cookies.ide_token;

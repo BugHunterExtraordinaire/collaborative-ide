@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
+
 import { ApiError } from "../types/express/errors";
-import { type ErrorMiddlware } from "../types/express/functions";
+import { ErrorMiddlware } from "../types/express/functions";
 
 const handleError: ErrorMiddlware = async (err, req, res, next) => {
   if (err instanceof ApiError) {
@@ -28,7 +29,6 @@ const handleError: ErrorMiddlware = async (err, req, res, next) => {
     return;
   } 
   
-  console.error("Unhandled Server Error:", err);
   res.status(500).json({ message: 'Internal Server Error' });
 };
 

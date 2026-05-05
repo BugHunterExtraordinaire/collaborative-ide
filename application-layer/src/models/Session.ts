@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+
 import { ISession } from "../types/mongoose/interfaces";
 
 const sessionSchema: mongoose.Schema = new mongoose.Schema({

@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+
 import { IExecutionLog } from '../types/mongoose/interfaces';
 
 const ExecutionLogSchema = new Schema({
@@ -27,10 +28,8 @@ const ExecutionLogSchema = new Schema({
     type: Number, 
     required: true 
   },
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
-  }
+}, {
+  timestamps: true,
 });
 
 export default mongoose.model<IExecutionLog>('ExecutionLog', ExecutionLogSchema);

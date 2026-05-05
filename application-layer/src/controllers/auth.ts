@@ -1,9 +1,11 @@
 import { JwtPayload } from "jsonwebtoken";
-import { BadRequestError, NotFoundError } from "../types/express/errors";
-import { DefaultController } from "../types/express/functions";
+
 import User from "../models/User";
 
-const loginUser: DefaultController = async (req, res) => {
+import { BadRequestError, NotFoundError } from "../types/express/errors";
+import { DefaultController } from "../types/express/functions";
+
+export const loginUser: DefaultController = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) throw new BadRequestError("Please provide both email and password");
 
@@ -25,7 +27,7 @@ const loginUser: DefaultController = async (req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge: 6 * 60 * 60 * 1000
   });
 
   res.status(200).json({
@@ -34,7 +36,7 @@ const loginUser: DefaultController = async (req, res) => {
   });
 }
 
-const registerUser: DefaultController = async (req, res) => {
+export const registerUser: DefaultController = async (req, res) => {
   const { username, email, password, role } = req.body;
   if (!username || !email || !password || !role ) throw new BadRequestError("Please provide all fields");
 
@@ -53,13 +55,7 @@ const registerUser: DefaultController = async (req, res) => {
   })
 }
 
-const logoutUser: DefaultController = async (req, res) => {
+export const logoutUser: DefaultController = async (req, res) => {
   res.clearCookie('ide_token');
   res.status(200).json({ message: "Logged out successfully" });
-}
-
-export {
-  loginUser,
-  registerUser,
-  logoutUser,
 }

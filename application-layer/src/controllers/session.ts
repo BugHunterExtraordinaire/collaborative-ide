@@ -1,14 +1,18 @@
-import { DefaultController } from "../types/express/functions";
 import crypto from 'crypto';
+
 import OperationLog from "../models/OperationLog";
 import ExecutionLog from "../models/ExecutionLog";
 import Session from '../models/Session';
+import User from "../models/User";
+
+import { ISession } from "../types/mongoose/interfaces";
+import { DefaultController } from '../types/express/functions';
 import { ForbiddenError, NotFoundError } from "../types/express/errors";
 
-const createSession: DefaultController = async (req, res) => {
+export const createSession: DefaultController = async (req, res) => {
   const { name, language } = req.body;
   const sessionId = crypto.randomBytes(4).toString('hex');
-  const userId = req.user?.userId;
+  const userId = req.user!.userId;
 
   const session = await Session.create({
     sessionId: sessionId,
@@ -21,63 +25,115 @@ const createSession: DefaultController = async (req, res) => {
   res.status(201).json(session);
 }
 
-const getSessions: DefaultController = async (req, res) => {
-  const userId = req.user?.userId;
+export const getSessions: DefaultController = async (req, res) => {
+  const userId = req.user!.userId;
+  const userRole = req.user!.role;
 
-  const sessions = await Session.find({ participants: userId })
-    .populate('owner', 'username') 
-    .sort({ createdAt: -1 });
+  let formattedSessions: Array<any> = [];
+  let sessions: Array<ISession> = [];
 
-  const formattedSessions = sessions.map(session => ({
-    sessionId: session.sessionId,
-    name: session.name,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    owner: (session.owner as any).username, 
-    createdAt: session.created_at
-  }));
+  if (userRole === "System Administrator") {
+    sessions = await Session.find({}).select("sessionId name owner createdAt");
+    if (sessions.length === 0) throw new NotFoundError("No sessions were found");
+
+    formattedSessions = await Promise.all(sessions.map(async (session) => {
+      const user = await User.findOne({ _id: session.owner }).select("username");
+
+      let username = "";
+      let id = "";
+
+      if (!user) {
+        username = "Owner Unavailable";
+        id = "ID Unavailable";
+      } else {
+        username = user.username;
+        id = user._id.toString();
+      }
+
+      return {
+        sessionId: session.sessionId,
+        name: session.name,
+        owner: username,
+        ownerId: id,
+        createdAt: session.createdAt
+      }
+    }));
+  } else {
+    sessions = await Session.find({ participants: userId }).select("sessionId name owner createdAt");
+    if (sessions.length === 0) throw new NotFoundError("No sessions were found");
+    
+    formattedSessions = await Promise.all(sessions.map(async (session) => {
+      const user = await User.findOne({ _id: session.owner }).select("username");
+
+      let username = "";
+      let id = "";
+
+      if (!user) {
+        username = "Owner Unavailable";
+        id = "ID Unavailable";
+      } else {
+        username = user.username;
+        id = user._id.toString();
+      }
+
+      return {
+        sessionId: session.sessionId,
+        name: session.name,
+        owner: username,
+        ownerId: id,
+        createdAt: session.createdAt
+      }
+    }));
+  }
 
   res.status(200).json(formattedSessions);
 }
 
-const getSession: DefaultController = async (req, res) => {
+export const getSession: DefaultController = async (req, res) => {
   const { id } = req.params;
-  const userId = req.user?.userId;
+  const userId = req.user!.userId;
 
   const session = await Session.findOne({ sessionId: id });
-
   if (!session) throw new NotFoundError(`No session with id: ${id}`);
 
-  if (userId) {
-    const isParticipant = session.participants.some(p => p.toString() === userId);
-    if (!isParticipant) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      session.participants.push(userId as any);
-      await session.save();
-    }
+  const isParticipant = session.participants.some(p => p.toString() === userId);
+  if (!isParticipant) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    session.participants.push(userId as any);
+    await session.save();
+
   }
 
   res.status(200).json(session);
 }
 
-const getSessionHistory: DefaultController = async (req, res) => {
+export const getSessionHistory: DefaultController = async (req, res) => {
   const { id } = req.params;
+
   const logs = await OperationLog.find({ sessionId: id }).sort({ timestamp: 1 });
+  if(logs.length === 0) throw new NotFoundError("No operation logs were found for this session");
+
   res.status(200).json(logs);
 }
 
-const deleteSession: DefaultController = async (req, res) => {
+export const deleteSession: DefaultController = async (req, res) => {
   const { id } = req.params;
-  const { role } = req.body;
+  const role = req.user!.role;
+  const userId = req.user!.userId;
+  
+  const session = await Session.findOne({ sessionId: id });
+  if (!session) throw new NotFoundError(`No session was found with id: ${id}`);
 
-  if (role !== 'System Administrator') throw new ForbiddenError("Forbidden: Admins only.");
+  if (role !== 'System Administrator' && session.owner.toString() !== userId) throw new ForbiddenError("Forbidden: Only System Admins and session owners can delete this session");
 
-  await Session.findOneAndDelete({ sessionId: id });
+  await Session.deleteOne({ sessionId: id });
   await OperationLog.deleteMany({ sessionId: id });
+  await ExecutionLog.deleteMany({ sessionId: id });
 
   res.status(200).json({ message: 'Session and history permanently deleted.' });
 }
 
-const getSessionAnalytics: DefaultController = async (req, res) => {
+export const getSessionAnalytics: DefaultController = async (req, res) => {
   const { id } = req.params;
 
   const session = await Session.findOne({ sessionId: id });
@@ -110,13 +166,4 @@ const getSessionAnalytics: DefaultController = async (req, res) => {
     pedagogicalTracking: executionStats,
     rawExecutionLogs: executions
   });
-}
-
-export {
-  createSession,
-  getSessions,
-  getSession,
-  getSessionHistory,
-  deleteSession,
-  getSessionAnalytics,
 }

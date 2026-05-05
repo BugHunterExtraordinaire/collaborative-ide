@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import bcryptjs from 'bcryptjs';
+import jwt from "jsonwebtoken";
+
 import { IUser } from "../types/mongoose/interfaces";
-import jwt , { JwtPayload } from "jsonwebtoken";
 
 const userSchema: mongoose.Schema = new mongoose.Schema({
   username: { 
@@ -23,10 +24,8 @@ const userSchema: mongoose.Schema = new mongoose.Schema({
     enum: ['Student', 'Instructor'], 
     default: 'Student',
   },
-  created_at: { 
-    type: Date, 
-    default: Date.now,
-  },
+}, {
+  timestamps: true,
 });
 
 userSchema.pre('save', async function(this: IUser) {
@@ -38,7 +37,7 @@ userSchema.method('verifyPassword', async function(this: IUser, password) {
   return await bcryptjs.compare(password, this.passwordHash);
 });
 
-userSchema.method('generateJWT', function(payload: JwtPayload) {
+userSchema.method('generateJWT', function(payload: jwt.JwtPayload) {
   return jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: process.env.JWT_LIFETIME as any });
 });
 

@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+
 import { IOperationLog } from '../types/mongoose/interfaces';
 
 const OperationLogSchema: Schema = new Schema({

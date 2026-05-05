@@ -285,6 +285,6 @@ server.listen(port, async () => {
     await connectDB(process.env.MONGO_URI as string);
     console.log(`API & Synchronization Cluster listening on http://localhost:${port}`);
   } catch (error) {
-
+    console.error("Error while connecting to database: "+ error);
   }
 });
