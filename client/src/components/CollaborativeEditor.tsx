@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import Editor, { type OnMount } from '@monaco-editor/react';
 import { editor, Range } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
-import type { CollaborativeEditorProps, BlameRecord, ActiveUser, AwarenessState } from '../types/interfaces';
+
+import Editor, { type OnMount } from '@monaco-editor/react';
+
+import type { CollaborativeEditorProps, ActiveUser, AwarenessState, Contributor } from '../types/interfaces';
 
 const CURSOR_COLORS = [
   '#f59e0b', '#3b82f6', '#10b981', '#ef4444',
@@ -22,7 +24,7 @@ export default function CollaborativeEditor({
   const userColorRef = useRef<string>('');
 
   const [awarenessUsers, setAwarenessUsers] = useState<ActiveUser[]>([]);
-  const [blameData, setBlameData] = useState<Record<string, BlameRecord>>({});
+  const [uniqueBlameUsers, setUniqueBlameUsers] = useState<Record<string, Contributor>>({});
 
   const isAdmin = currentUser.role === 'System Administrator';
 
@@ -55,8 +57,13 @@ export default function CollaborativeEditor({
     provider.awareness.on('change', updateAwareness);
     updateAwareness();
 
+    const handleBeforeUnload = () => provider.awareness.setLocalState(null);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       provider.awareness.off('change', updateAwareness);
+      provider.awareness.setLocalState(null); 
     };
   }, [provider, currentUser]);
 
@@ -84,44 +91,88 @@ export default function CollaborativeEditor({
   }, [editorInstance, activeFile, localDoc, provider]);
 
   useEffect(() => {
-    if (!editorInstance || !localDoc) return;
+    if (!editorInstance || !localDoc || !activeFile) return;
 
-    const blameMap = localDoc.getMap<BlameRecord>('blame-tracking');
+    const blameMap = localDoc.getMap<Record<string, Contributor>>('blame-tracking-v2');
 
-    const changeDisposable = editorInstance.onDidChangeModelContent(() => {
+    const changeDisposable = editorInstance.onDidChangeModelContent((e) => {
       if (editorInstance.hasTextFocus()) {
-        const pos = editorInstance.getPosition();
-        if (pos) {
-          blameMap.set(pos.lineNumber.toString(), {
-            name: currentUser.username,
-            color: userColorRef.current
+        e.changes.forEach(change => {
+          const lines = change.text.split('\n');
+          const startLine = change.range.startLineNumber;
+
+          lines.forEach((lineText, index) => {
+            const currentLine = startLine + index;
+            
+            const addedChars = lineText.length;
+            const points = addedChars > 0 ? addedChars : 1; 
+
+            const lineKey = `${activeFile}::${currentLine}`;
+            const currentLineData = blameMap.get(lineKey) || {};
+
+            const userContrib = currentLineData[currentUser.username] || {
+              name: currentUser.username,
+              color: userColorRef.current,
+              count: 0,
+              lastEdited: Date.now()
+            };
+
+            blameMap.set(lineKey, {
+              ...currentLineData,
+              [currentUser.username]: {
+                ...userContrib,
+                count: userContrib.count + points,
+                lastEdited: Date.now()
+              }
+            });
           });
-        }
+        });
       }
     });
     
     const updateDecorations = () => {
       const newDecorations: editor.IModelDeltaDecoration[] = [];
-      const currentBlameState = blameMap.toJSON() as Record<string, BlameRecord>;
+      const currentBlameState = blameMap.toJSON() as Record<string, Record<string, Contributor>>;
       
-      setBlameData(currentBlameState);
+      const fileUniqueUsers: Record<string, Contributor> = {};
 
-      Object.entries(currentBlameState).forEach(([lineStr, userData]) => {
-        const line = parseInt(lineStr, 10);
-        if (isNaN(line)) return;
+      Object.entries(currentBlameState).forEach(([key, contributors]) => {
+        const [file, lineStr] = key.split('::');
 
-        const safeClass = userData.name.replace(/[^a-zA-Z0-9]/g, '');
+        if (file === activeFile) {
+          const line = parseInt(lineStr, 10);
+          if (isNaN(line)) return;
 
-        newDecorations.push({
-          range: new Range(line, 1, line, 1),
-          options: {
-            isWholeLine: false,
-            glyphMarginClassName: `blame-marker-${safeClass}`,
-            glyphMarginHoverMessage: { value: `**${userData.name}** wrote/edited this line.` }
-          }
-        });
+          const sortedContributors = Object.values(contributors).sort((a, b) => {
+            if (b.count !== a.count) return b.count - a.count;
+            return b.lastEdited - a.lastEdited;
+          });
+
+          if (sortedContributors.length === 0) return;
+
+          const primary = sortedContributors[0];
+          const safeClass = primary.name.replace(/[^a-zA-Z0-9]/g, '');
+
+          sortedContributors.forEach(c => {
+            if (!fileUniqueUsers[c.name]) fileUniqueUsers[c.name] = c;
+          });
+
+          const hoverMarkdown = sortedContributors.map((c, i) => 
+            `${i === 0 ? '🏆' : '•'} **${c.name}**: ${c.count} contributions`
+          ).join('\n\n');
+
+          newDecorations.push({
+            range: new Range(line, 1, line, 1),
+            options: {
+              isWholeLine: false,
+              glyphMarginClassName: `blame-marker-${safeClass}`,
+              glyphMarginHoverMessage: { value: `### Line Authors\n\n${hoverMarkdown}` }
+            }
+          });
+        }
       });
 
+      setUniqueBlameUsers(fileUniqueUsers);
       decorationsRef.current?.set(newDecorations);
     };
 
@@ -132,7 +183,7 @@ export default function CollaborativeEditor({
       changeDisposable.dispose();
       blameMap.unobserve(updateDecorations);
     };
-  }, [editorInstance, localDoc, currentUser]);
+  }, [editorInstance, localDoc, currentUser, activeFile]);
 
   const dynamicCursorCSS = awarenessUsers.map(({ clientId, state }) => {
     if (!state || !state.user || !state.user.color) return '';
@@ -164,7 +215,7 @@ export default function CollaborativeEditor({
     `;
   }).join('\n');
 
-  const dynamicBlameCSS = Object.values(blameData).map((user) => {
+  const dynamicBlameCSS = Object.values(uniqueBlameUsers).map((user) => {
     const initials = user.name.substring(0, 2).toUpperCase();
     const safeClass = user.name.replace(/[^a-zA-Z0-9]/g, '');
     return `

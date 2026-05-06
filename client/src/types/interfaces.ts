@@ -158,3 +158,10 @@ export interface SessionObject {
   ownerId: string;
   createdAt: Date;
 }
+
+export interface Contributor {
+  name: string;
+  color: string;
+  count: number;
+  lastEdited: number;
+}
