@@ -22,7 +22,10 @@ export const createSession: DefaultController = async (req, res) => {
     language,
   });
 
-  res.status(201).json(session);
+  res.status(201).json({
+    session,
+    message: "Session created successfully!"
+  });
 }
 
 export const getSessions: DefaultController = async (req, res) => {
@@ -104,7 +107,10 @@ export const getSession: DefaultController = async (req, res) => {
 
   }
 
-  res.status(200).json(session);
+  res.status(200).json({ 
+    session,
+    message: `Welcome to session: ${session.name}`
+  });
 }
 
 export const getSessionHistory: DefaultController = async (req, res) => {
@@ -130,7 +136,7 @@ export const deleteSession: DefaultController = async (req, res) => {
   await OperationLog.deleteMany({ sessionId: id });
   await ExecutionLog.deleteMany({ sessionId: id });
 
-  res.status(200).json({ message: 'Session and history permanently deleted.' });
+  res.status(200).json({ message: 'Session and history permanently deleted!' });
 }
 
 export const getSessionAnalytics: DefaultController = async (req, res) => {
