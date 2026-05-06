@@ -1,17 +1,27 @@
 import axios from 'axios';
 
-import { Toaster } from 'react-hot-toast';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import toast, { Toaster } from 'react-hot-toast';
 
-import type { DashboardProps } from '../types/interfaces';
-import type { SessionsArray } from '../types/arrays';
+import { createContext, useContext } from 'react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
 import UserDashboard from './dashboard/UserDashboard';
 import AdminDashboard from './dashboard/AdminDashboard';
 
-export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps) {
+import { DashboardContext } from '../App';
+
+import type { DashboardProps, UserDashboardProps } from '../types/interfaces';
+import type { SessionsArray } from '../types/arrays';
+
+const SpecificDashboardContext = createContext<UserDashboardProps | null>(null);
+
+function Dashboard() {
 
   const queryClient = useQueryClient();
+
+  const { user, onJoinRoom, onLogout } = useContext(DashboardContext) as DashboardProps;
+
+  const isAdmin = user.role === "System Administrator";
 
   const { data: sessions = [] } = useQuery<SessionsArray>({
     queryKey: ['sessions'],
@@ -27,8 +37,12 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
       return res.data;
     },
     onSuccess: (data) => {
-      onJoinRoom(data.sessionId);
-    }
+      onJoinRoom(data.session.sessionId);
+      toast.success("Session created successfully!");
+    },
+    onError: (err) => {
+      toast.error(`${err.message}`)
+    },
   });
 
   const deleteSessionMutation = useMutation({
@@ -37,6 +51,10 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      toast.success("Session deleted successfully!");
+    },
+    onError: () => {
+      toast.error(<b>Error while deleting session</b>)
     }
   });
 
@@ -50,34 +68,27 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
     }
   };
 
-  if (user.role === "System Administrator") {
-    return (
-      <>
-        <Toaster position='top-center' reverseOrder={false} />
-        <AdminDashboard
-          user={user}
-          onJoinRoom={onJoinRoom}
-          onLogout={onLogout}
-          handleDeleteSession={handleDeleteSession}
-          handleCreateSession={handleCreateSession}
-          sessions={sessions}
-        />
-      </>
-    );
-  } else {
-    return (
-      <>
-        <Toaster position='top-center' reverseOrder={false} />
-        <UserDashboard
-          user={user}
-          onJoinRoom={onJoinRoom}
-          onLogout={onLogout}
-          handleDeleteSession={handleDeleteSession}
-          handleCreateSession={handleCreateSession}
-          sessions={sessions}
-        />
-      </>
-    );
-  }
+  return (
+    <SpecificDashboardContext.Provider value={{
+      user,
+      onJoinRoom,
+      onLogout,
+      handleDeleteSession,
+      handleCreateSession,
+      sessions,
+    }}>
+      <Toaster position='top-center' reverseOrder={false} toastOptions={{
+        style: {
+          background: '#18181B',
+          color: '#fff'
+        },
+      }} />
+      {isAdmin ? <AdminDashboard /> : <UserDashboard />}
+    </SpecificDashboardContext.Provider>
+  );
+}
 
+export {
+  SpecificDashboardContext,
+  Dashboard
 }

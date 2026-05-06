@@ -1,16 +1,21 @@
 import axios from 'axios';
 
+import { useContext } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import DashboardHeader from './shared/DashboardHeader';
 import SessionForms from './shared/SessionForms';
 import SessionList from './shared/SessionList';
 
+import { SpecificDashboardContext } from '../Dashboard';
+
 import type { UserDashboardProps } from '../../types/interfaces';
 import type { ContainerArray } from '../../types/arrays';
 
-export default function AdminDashboard({ user, onJoinRoom, onLogout, handleDeleteSession, handleCreateSession, sessions }: UserDashboardProps) {
+export default function AdminDashboard() {
   const queryClient = useQueryClient();
+
+  const { user } = useContext(SpecificDashboardContext) as UserDashboardProps;
 
   const { data: containers = [] } = useQuery<ContainerArray>({
     queryKey: ['docker-containers'],
@@ -34,16 +39,11 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout, handleDelet
   return (
     <div className="min-h-screen bg-black p-10 text-white font-sans overflow-y-auto">
       <div className="max-w-6xl mx-auto">
-        <DashboardHeader user={user} onLogout={onLogout} />
+        <DashboardHeader />
         
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex flex-col gap-6 w-full lg:w-1/3">
-            <SessionForms 
-              createTitle="Create Admin Session" createBtnText="Create Instance"
-              joinTitle="Spy on Session" joinBtnText="Connect"
-              onCreate={handleCreateSession} 
-              onJoin={onJoinRoom} 
-            />
+            <SessionForms />
 
             <div className="bg-zinc-900 p-6 rounded-xl border border-red-900/50 shadow-lg flex flex-col">
               <div className="flex justify-between items-center mb-4">
@@ -82,10 +82,7 @@ export default function AdminDashboard({ user, onJoinRoom, onLogout, handleDelet
             </div>
           </div>
           
-          <SessionList 
-            title="Global Platform Sessions" sessions={sessions} currentUser={user} 
-            joinBtnText="Spy / Join" onJoin={onJoinRoom} onDelete={handleDeleteSession}
-          />
+          <SessionList />
         </div>
       </div>
     </div>

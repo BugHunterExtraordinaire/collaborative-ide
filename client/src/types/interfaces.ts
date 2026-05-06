@@ -64,24 +64,6 @@ export interface HeaderProps {
   onLogout: () => void;
 }
 
-export interface FormProps {
-  createTitle: string;
-  createBtnText: string;
-  joinTitle: string;
-  joinBtnText: string;
-  onCreate: (name: string, language: string) => void;
-  onJoin: (id: string) => void;
-}
-
-export interface ListProps {
-  title: string;
-  sessions: SessionsArray;
-  currentUser: UserObject;
-  joinBtnText: string;
-  onJoin: (id: string) => void;
-  onDelete: (id: string) => void;
-}
-
 export interface HistoryLog {
   _id: string;
   sessionId: string;

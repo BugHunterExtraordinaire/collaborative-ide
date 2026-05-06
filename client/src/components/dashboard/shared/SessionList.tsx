@@ -1,7 +1,17 @@
-import type { ListProps } from '../../../types/interfaces';
+import { useContext } from "react";
 
-export default function SessionList({ title, sessions, currentUser, joinBtnText, onJoin, onDelete }: ListProps) {
-  const isAdmin = currentUser.role === 'System Administrator';
+import { SpecificDashboardContext } from "../../Dashboard";
+
+import type { UserDashboardProps } from "../../../types/interfaces";
+
+export default function SessionList() {
+
+  const { user, sessions, onJoinRoom, handleDeleteSession } = useContext(SpecificDashboardContext) as UserDashboardProps;
+
+  const isAdmin = user.role === 'System Administrator';
+
+  const title = isAdmin ? "Global Platform Sessions" : "Your Active Sessions";
+  const joinBtnText = isAdmin ? "Spy / Join" : "Enter Room";
 
   return (
     <div className="flex-1 bg-zinc-900 p-8 rounded-xl border border-zinc-800 shadow-lg flex flex-col h-[calc(100vh-200px)]">
@@ -19,13 +29,13 @@ export default function SessionList({ title, sessions, currentUser, joinBtnText,
               <div>
                 <div className="font-bold text-lg text-white flex items-center gap-2">
                   {session.name}
-                  {session.ownerId !== currentUser.userId && !isAdmin && (
+                  {session.ownerId !== user.userId && !isAdmin && (
                     <span className="text-[10px] font-normal text-zinc-400 bg-zinc-700 px-1.5 py-0.5 rounded">Joined | Owner: {session.owner}</span>
                   )}
                   {isAdmin && (
                     <span className="text-[10px] font-normal text-zinc-400 bg-zinc-700 px-1.5 py-0.5 rounded">Owner: {session.owner} | Owner ID: {session.ownerId}</span>
                   )}
-                  {session.ownerId === currentUser.userId && (
+                  {session.ownerId === user.userId && (
                     <span className="text-[10px] font-normal text-zinc-400 bg-zinc-700 px-1.5 py-0.5 rounded">Owned</span>
                   )}
                 </div>
@@ -33,11 +43,11 @@ export default function SessionList({ title, sessions, currentUser, joinBtnText,
               </div>
               
               <div className="flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                <button onClick={() => onJoin(session.sessionId)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm rounded font-medium shadow">
+                <button onClick={() => onJoinRoom(session.sessionId)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm rounded font-medium shadow">
                   {joinBtnText}
                 </button>
-                {(isAdmin || (session.ownerId === currentUser.userId)) && onDelete && (
-                  <button onClick={() => onDelete(session.sessionId)} className="px-3 py-2 bg-red-600 hover:bg-red-700 transition-colors text-white text-sm rounded font-medium shadow">
+                {(isAdmin || (session.ownerId === user.userId)) && (
+                  <button onClick={() => handleDeleteSession(session.sessionId)} className="px-3 py-2 bg-red-600 hover:bg-red-700 transition-colors text-white text-sm rounded font-medium shadow">
                     Delete
                   </button>
                 )}

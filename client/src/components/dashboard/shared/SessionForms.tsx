@@ -1,21 +1,30 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { SpecificDashboardContext } from '../../Dashboard';
+import type { UserDashboardProps } from '../../../types/interfaces';
 
-import type { FormProps } from '../../../types/interfaces';
-
-export default function SessionForms({ createTitle, createBtnText, joinTitle, joinBtnText, onCreate, onJoin }: FormProps) {
+export default function SessionForms() {
   const [newRoomName, setNewRoomName] = useState('');
   const [language, setLanguage] = useState('JavaScript');
   const [joinId, setJoinId] = useState('');
 
+  const { user, handleCreateSession, onJoinRoom } = useContext(SpecificDashboardContext) as UserDashboardProps;
+
+  const isAdmin = user.role === "System Administrator";
+
+  const createTitle = isAdmin ? "Create Admin Session" : "Create Session";
+  const createBtnText = isAdmin ? "Create Instance" : "Create Workspace";
+  const joinTitle = isAdmin ? "Spy on Session" : "Join Session with Code";
+  const joinBtnText = "Connect";
+
   const handleCreate: React.SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
-    onCreate(newRoomName, language);
+    handleCreateSession(newRoomName, language);
     setNewRoomName('');
   };
 
   const handleJoin: React.SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
-    if (joinId.trim()) onJoin(joinId.trim());
+    if (joinId.trim()) onJoinRoom(joinId.trim());
     setJoinId('');
   };
 

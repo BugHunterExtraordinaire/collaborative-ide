@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast'
 
 import { useState } from 'react';
 
@@ -7,26 +8,21 @@ import { type AuthenticationProps } from '../../types/interfaces';
 export default function LoginForm({ onSuccess, onToggleMode }: AuthenticationProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   const handleSubmit: React.SubmitEventHandler = async (e) => {
     e.preventDefault();
-    setError('');
-    try {
-      const res = await axios.post("http://localhost:80/api/v1/auth/login", { email, password });
-      onSuccess(res.data.user);
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Authentication failed.');
-      } else {
-        setError('An unexpected error occurred.');
-      }
-    }
+    toast.promise(axios.post("http://localhost:80/api/v1/auth/login", { email, password }), {
+      loading: "Logging in...",
+      success: (res) => {
+        onSuccess(res.data.user);
+        return `${res.data.message}, Welcome ${res.data.user.username}`;
+      },
+      error: (err) => `${err.response.data.message}`
+    });
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error && <div className="text-red-500 mb-2 text-sm text-center bg-red-500/10 p-2 rounded">{error}</div>}
       
       <input
         type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)}
