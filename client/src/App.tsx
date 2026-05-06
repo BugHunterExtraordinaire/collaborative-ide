@@ -1,5 +1,7 @@
 import * as Y from 'yjs';
 import axios from 'axios';
+import { Toaster } from 'react-hot-toast';
+
 import { io, Socket } from 'socket.io-client';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -226,7 +228,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
       <div className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900">
-        
+        <Toaster position='top-center' reverseOrder={false} />
         <div className="absolute top-2 right-[41%] z-10 text-xs font-mono px-2 py-1 bg-black/50 rounded border border-zinc-700 flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${yjsStatus === 'Connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
           {yjsStatus}

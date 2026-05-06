@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import { Toaster } from 'react-hot-toast';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
 import type { DashboardProps } from '../types/interfaces';
@@ -50,23 +51,33 @@ export default function Dashboard({ user, onJoinRoom, onLogout }: DashboardProps
   };
 
   if (user.role === "System Administrator") {
-    return <AdminDashboard
-              user={user}
-              onJoinRoom={onJoinRoom}
-              onLogout={onLogout}
-              handleDeleteSession={handleDeleteSession}
-              handleCreateSession={handleCreateSession}
-              sessions={sessions}
-            />;
+    return (
+      <>
+        <Toaster position='top-center' reverseOrder={false} />
+        <AdminDashboard
+          user={user}
+          onJoinRoom={onJoinRoom}
+          onLogout={onLogout}
+          handleDeleteSession={handleDeleteSession}
+          handleCreateSession={handleCreateSession}
+          sessions={sessions}
+        />
+      </>
+    );
   } else {
-    return <UserDashboard
-              user={user}
-              onJoinRoom={onJoinRoom}
-              onLogout={onLogout}
-              handleDeleteSession={handleDeleteSession}
-              handleCreateSession={handleCreateSession}
-              sessions={sessions}
-            />;
+    return (
+      <>
+        <Toaster position='top-center' reverseOrder={false} />
+        <UserDashboard
+          user={user}
+          onJoinRoom={onJoinRoom}
+          onLogout={onLogout}
+          handleDeleteSession={handleDeleteSession}
+          handleCreateSession={handleCreateSession}
+          sessions={sessions}
+        />
+      </>
+    );
   }
 
 }
