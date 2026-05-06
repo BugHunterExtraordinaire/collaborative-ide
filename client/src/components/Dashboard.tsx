@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 import { createContext, useContext } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -77,12 +76,6 @@ function Dashboard() {
       handleCreateSession,
       sessions,
     }}>
-      <Toaster position='top-center' reverseOrder={false} toastOptions={{
-        style: {
-          background: '#18181B',
-          color: '#fff'
-        },
-      }} />
       {isAdmin ? <AdminDashboard /> : <UserDashboard />}
     </SpecificDashboardContext.Provider>
   );
