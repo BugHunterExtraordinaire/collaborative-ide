@@ -14,6 +14,7 @@ const userSchema: mongoose.Schema = new mongoose.Schema({
     type: String, 
     required: true, 
     unique: true,
+    match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Please provide a valid email"],
   },
   passwordHash: { 
     type: String, 
@@ -21,7 +22,7 @@ const userSchema: mongoose.Schema = new mongoose.Schema({
   },
   role: { 
     type: String, 
-    enum: ['Student', 'Instructor'], 
+    enum: ['Student', 'Instructor', 'System Administrator'], 
     default: 'Student',
   },
 }, {
