@@ -1,12 +1,75 @@
-import { type TerminalPanelProps } from '../../types/interfaces';
+import axios from 'axios';
 
-export default function TerminalPanel({ output, isRunning, isPlaybackMode, onRunCode }: TerminalPanelProps) {
+import { useContext } from 'react';
+import type { WorkspaceProps } from '../../types/interfaces';
+import { WorkspaceContext } from '../../App';
+
+export default function TerminalPanel() {
+
+  const { localDoc, files, language, currentRoom, user, socket, isRunning, isPlaybackMode, output, setIsRunning, setOutput } = useContext(WorkspaceContext) as WorkspaceProps;
+
+  const handleRunCode = async () => {
+    if (!localDoc) return;
+    setIsRunning(true);
+    setOutput('Spawning isolated container...\nExecuting...');
+
+    try {
+      const filesPayload = files.map(fileName => ({
+        name: fileName,
+        content: localDoc.getText(fileName).toString()
+      }));
+
+      const response = await axios.post("http://localhost:80/api/v1/execute", {
+        files: filesPayload,
+        language,
+        sessionId: currentRoom
+      });
+
+      const resultOutput = response.data.output || 'Execution successful (No output)';
+      setOutput(resultOutput);
+
+      if (user?.role === 'Instructor' && socket) {
+        socket.emit('instructor-execution', {
+          sessionId: currentRoom,
+          output: `[Instructor Broadcast]:\n${resultOutput}`
+        });
+      }
+
+      if (user?.role === 'Student' && socket) {
+        socket.emit('student-execution', {
+          sessionId: currentRoom,
+          output: `[${user?.username} Broadcast]:\n${resultOutput}`
+        });
+      }
+
+    } catch (error: unknown) {
+      const errorMsg = axios.isAxiosError(error) ? (error.response?.data?.message || 'Error') : 'Error';
+      setOutput(errorMsg);
+
+      if (user?.role === 'Instructor' && socket) {
+        socket.emit('instructor-execution', {
+          sessionId: currentRoom,
+          output: `[Instructor Broadcast Failed]:\n${errorMsg}`
+        });
+      }
+
+      if (user?.role === 'Student' && socket) {
+        socket.emit('student-execution', {
+          sessionId: currentRoom,
+          output: `[${user?.username} Broadcast Failed]:\n${errorMsg}`
+        });
+      }
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
   return (
     <div className="h-1/2 flex flex-col border-b border-zinc-800">
       <div className="p-3 bg-zinc-800 border-b border-zinc-700 flex justify-between items-center">
         <h3 className="m-0 text-sm font-bold text-zinc-100 uppercase tracking-wider">Terminal Output</h3>
         <button
-          onClick={onRunCode}
+          onClick={handleRunCode}
           disabled={isRunning || isPlaybackMode}
           className={`px-4 py-1.5 text-sm font-bold rounded transition-colors ${
             isRunning || isPlaybackMode 

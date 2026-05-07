@@ -1,8 +1,12 @@
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
-import type { AnalyticsModalProps, ExecutionStats } from '../../types/interfaces';
+import type { AnalyticsModalProps, ExecutionStats, WorkspaceProps } from '../../types/interfaces';
+import { useContext } from 'react';
+import { WorkspaceContext } from '../../App';
 
-export default function InstructorAnalyticsModal({ currentRoom, onClose }: AnalyticsModalProps) {
+export default function InstructorAnalyticsModal({ setShowAnalytics }: AnalyticsModalProps) {
+
+  const { currentRoom } = useContext(WorkspaceContext) as WorkspaceProps;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['session-analytics', currentRoom],
@@ -13,6 +17,10 @@ export default function InstructorAnalyticsModal({ currentRoom, onClose }: Analy
     enabled: !!currentRoom,
     refetchOnWindowFocus: false, 
   });
+
+  const handleCloseModal = () => {
+    setShowAnalytics(false);
+  }
 
   const handleExportData = () => {
     if (!data) return;
@@ -30,7 +38,7 @@ export default function InstructorAnalyticsModal({ currentRoom, onClose }: Analy
       <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-150 shadow-2xl flex flex-col max-h-[80vh]">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white">Pedagogical Tracking & Export</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white font-bold cursor-pointer">✕</button>
+          <button onClick={handleCloseModal} className="text-zinc-400 hover:text-white font-bold cursor-pointer">✕</button>
         </div>
 
         {isLoading ? (
@@ -46,7 +54,6 @@ export default function InstructorAnalyticsModal({ currentRoom, onClose }: Analy
                 <div className="text-zinc-500 text-sm italic">No executions recorded yet.</div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  {/* THE FIX: Cast the entries array to the strict type before mapping */}
                   {(Object.entries(data.pedagogicalTracking) as [string, ExecutionStats][]).map(([username, stats]) => (
                     <div key={username} className="flex justify-between items-center p-2 bg-zinc-900 rounded border border-zinc-800">
                       <span className="font-bold text-blue-400">{username}</span>
@@ -74,7 +81,7 @@ export default function InstructorAnalyticsModal({ currentRoom, onClose }: Analy
 
         <div className="mt-6 flex justify-end gap-3 border-t border-zinc-800 pt-4">
           <button 
-            onClick={onClose} 
+            onClick={handleCloseModal} 
             className="px-4 py-2 rounded text-zinc-300 hover:bg-zinc-800 transition-colors text-sm font-bold cursor-pointer"
           >
             Close

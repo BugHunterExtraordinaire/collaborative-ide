@@ -1,32 +1,30 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { editor, Range } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 
 import Editor, { type OnMount } from '@monaco-editor/react';
 
-import type { CollaborativeEditorProps, ActiveUser, AwarenessState, Contributor } from '../types/interfaces';
+import type { ActiveUser, AwarenessState, Contributor, WorkspaceProps } from '../../types/interfaces';
+import { WorkspaceContext } from '../../App';
 
 const CURSOR_COLORS = [
   '#f59e0b', '#3b82f6', '#10b981', '#ef4444',
   '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
 ];
 
-export default function CollaborativeEditor({
-  language,
-  currentUser,
-  activeFile,
-  localDoc,
-  provider
-}: CollaborativeEditorProps) {
+export default function CollaborativeEditor() {
+
+  const { user, provider, localDoc, safeActiveFile, language } = useContext(WorkspaceContext) as WorkspaceProps;
+
   const [editorInstance, setEditorInstance] = useState<editor.IStandaloneCodeEditor | null>(null);
   const bindingRef = useRef<MonacoBinding | null>(null);
   const decorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null);
   const userColorRef = useRef<string>('');
 
-  const [awarenessUsers, setAwarenessUsers] = useState<ActiveUser[]>([]);
+  const [awarenessUsers, setAwarenessUsers] = useState<Array<ActiveUser>>([]);
   const [uniqueBlameUsers, setUniqueBlameUsers] = useState<Record<string, Contributor>>({});
 
-  const isAdmin = currentUser.role === 'System Administrator';
+  const isAdmin = user.role === 'System Administrator';
 
   const handleEditorDidMount: OnMount = (editor) => {
     setEditorInstance(editor);
@@ -40,7 +38,7 @@ export default function CollaborativeEditor({
     userColorRef.current = userColor;
 
     provider.awareness.setLocalStateField('user', {
-      name: currentUser.username,
+      name: user.username,
       color: userColor
     });
 
@@ -65,16 +63,16 @@ export default function CollaborativeEditor({
       provider.awareness.off('change', updateAwareness);
       provider.awareness.setLocalState(null); 
     };
-  }, [provider, currentUser]);
+  }, [provider, user]);
 
   useEffect(() => {
-    if (!editorInstance || !localDoc || !provider || !activeFile) return;
+    if (!editorInstance || !localDoc || !provider || !safeActiveFile) return;
 
     if (bindingRef.current) {
       bindingRef.current.destroy();
     }
 
-    const localText = localDoc.getText(activeFile);
+    const localText = localDoc.getText(safeActiveFile);
 
     bindingRef.current = new MonacoBinding(
       localText,
@@ -88,10 +86,10 @@ export default function CollaborativeEditor({
         bindingRef.current.destroy();
       }
     };
-  }, [editorInstance, activeFile, localDoc, provider]);
+  }, [editorInstance, safeActiveFile, localDoc, provider]);
 
   useEffect(() => {
-    if (!editorInstance || !localDoc || !activeFile) return;
+    if (!editorInstance || !localDoc || !safeActiveFile) return;
 
     const blameMap = localDoc.getMap<Record<string, Contributor>>('blame-tracking-v2');
 
@@ -107,11 +105,11 @@ export default function CollaborativeEditor({
             const addedChars = lineText.length;
             const points = addedChars > 0 ? addedChars : 1; 
 
-            const lineKey = `${activeFile}::${currentLine}`;
+            const lineKey = `${safeActiveFile}::${currentLine}`;
             const currentLineData = blameMap.get(lineKey) || {};
 
-            const userContrib = currentLineData[currentUser.username] || {
-              name: currentUser.username,
+            const userContrib = currentLineData[user.username] || {
+              name: user.username,
               color: userColorRef.current,
               count: 0,
               lastEdited: Date.now()
@@ -119,7 +117,7 @@ export default function CollaborativeEditor({
 
             blameMap.set(lineKey, {
               ...currentLineData,
-              [currentUser.username]: {
+              [user.username]: {
                 ...userContrib,
                 count: userContrib.count + points,
                 lastEdited: Date.now()
@@ -139,7 +137,7 @@ export default function CollaborativeEditor({
       Object.entries(currentBlameState).forEach(([key, contributors]) => {
         const [file, lineStr] = key.split('::');
 
-        if (file === activeFile) {
+        if (file === safeActiveFile) {
           const line = parseInt(lineStr, 10);
           if (isNaN(line)) return;
 
@@ -183,7 +181,7 @@ export default function CollaborativeEditor({
       changeDisposable.dispose();
       blameMap.unobserve(updateDecorations);
     };
-  }, [editorInstance, localDoc, currentUser, activeFile]);
+  }, [editorInstance, localDoc, user, safeActiveFile]);
 
   const dynamicCursorCSS = awarenessUsers.map(({ clientId, state }) => {
     if (!state || !state.user || !state.user.color) return '';
@@ -245,7 +243,7 @@ export default function CollaborativeEditor({
         height="100%"
         theme="vs-dark"
         language={language.toLowerCase()}
-        path={activeFile}
+        path={safeActiveFile}
         onMount={handleEditorDidMount}
         options={{
           minimap: { enabled: false },

@@ -1,14 +1,19 @@
-import { useState } from 'react';
-import { type FileTabsProps } from '../../types/interfaces';
+import { useContext, useState } from 'react';
+import type { WorkspaceProps } from '../../types/interfaces';
+import { WorkspaceContext } from '../../App';
 
-export default function FileTabs({ files, activeFile, onSelectFile, onAddFile, isPlaybackMode }: FileTabsProps) {
+export default function FileTabs() {
+
+  const { localDoc, files, safeActiveFile, isPlaybackMode, setActiveFile } = useContext(WorkspaceContext) as WorkspaceProps;
+
   const [isAdding, setIsAdding] = useState(false);
   const [newFileName, setNewFileName] = useState('');
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd: React.SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     if (newFileName.trim() && !files.includes(newFileName.trim())) {
-      onAddFile(newFileName.trim());
+      localDoc?.getArray<string>('file-list').push([newFileName.trim()]);
+      setActiveFile(newFileName.trim())
       setNewFileName('');
       setIsAdding(false);
     }
@@ -19,12 +24,11 @@ export default function FileTabs({ files, activeFile, onSelectFile, onAddFile, i
       {files.map(file => (
         <button
           key={file}
-          onClick={() => onSelectFile(file)}
-          className={`px-4 py-2 border-r border-zinc-800 transition-colors ${
-            activeFile === file 
-              ? 'bg-zinc-900 text-blue-400 border-t-2 border-t-blue-500' 
+          onClick={() => setActiveFile(file)}
+          className={`px-4 py-2 border-r border-zinc-800 transition-colors ${safeActiveFile === file
+              ? 'bg-zinc-900 text-blue-400 border-t-2 border-t-blue-500'
               : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-300'
-          }`}
+            }`}
         >
           {file}
         </button>

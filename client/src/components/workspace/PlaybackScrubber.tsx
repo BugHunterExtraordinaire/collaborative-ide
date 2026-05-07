@@ -1,6 +1,11 @@
-import { type PlaybackScrubberProps } from '../../types/interfaces';
+import { useContext } from 'react';
+import type { WorkspaceProps } from '../../types/interfaces';
+import { WorkspaceContext } from '../../App';
 
-export default function PlaybackScrubber({ historyLogs, playbackIndex, setPlaybackIndex }: PlaybackScrubberProps) {
+export default function PlaybackScrubber() {
+
+  const { historyLogs, playbackIndex, setPlaybackIndex } = useContext(WorkspaceContext) as WorkspaceProps;
+
   if (historyLogs.length === 0) return null;
 
   return (

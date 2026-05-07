@@ -4,6 +4,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 import { Socket } from 'socket.io-client';
 
 import type { SessionsArray, HistoryLogArray } from './arrays';
+import type { WebsocketProvider } from 'y-websocket';
 
 export interface UserObject {
   userId: string;
@@ -13,12 +14,6 @@ export interface UserObject {
 
 export interface LoginProps {
   onLoginSuccess: (user: UserObject) => void;
-}
-
-export interface ChatProps {
-  currentRoom: string;
-  username: string;
-  socket: Socket | null;
 }
 
 export interface Message {
@@ -57,6 +52,31 @@ export interface JoinSessionFormProps {
   joinBtnText: string;
 }
 
+export interface WorkspaceProps {
+  yjsStatus: string;
+  currentRoom: string;
+  language: string;
+  isPlaybackMode: boolean;
+  playbackIndex: number;
+  playbackCode: string;
+  localDoc: Y.Doc | null;
+  provider: WebsocketProvider | null;
+  output: string;
+  isRunning: boolean;
+  socket: Socket | null;
+  historyLogs: HistoryLogArray;
+  user: UserObject;
+  files: Array<string>;
+  safeActiveFile: string;
+  setActiveFile: (activeFile: string) => void;
+  setIsPlaybackMode: (isPlaybackMode: boolean) => void;
+  setPlaybackIndex: (playbackIndex: number) => void;
+  setCurrentRoom: (currentRoom: string | null) => void;
+  setOutput: (output: string) => void;
+  setFiles: (files: Array<string>) => void;
+  setIsRunning: (isRunning: boolean) => void;
+}
+
 export interface UserDashboardProps {
   user: UserObject;
   onJoinRoom: (sessionId: string) => void;
@@ -64,15 +84,6 @@ export interface UserDashboardProps {
   handleDeleteSession: (sessionId: string) => void;
   handleCreateSession: (name: string, language: string) => void;
   sessions: SessionsArray; 
-}
-
-export interface CollaborativeEditorProps {
-  language: string;
-  currentUser: UserObject;
-  activeFile: string;
-  localDoc: Y.Doc | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  provider: any;
 }
 
 export interface DockerContainer {
@@ -102,30 +113,6 @@ export interface HistoryLog {
   timestamp: string;
 }
 
-export interface EditorToolbarProps {
-  currentRoom: string;
-  language: string;
-  isPlaybackMode: boolean;
-  setIsPlaybackMode: (mode: boolean) => void;
-  historyLength: number;
-  setPlaybackIndex: (index: number) => void;
-  user: UserObject;
-  onLeaveRoom: () => void;
-}
-
-export interface PlaybackScrubberProps {
-  historyLogs: HistoryLogArray;
-  playbackIndex: number;
-  setPlaybackIndex: (index: number) => void;
-}
-
-export interface TerminalPanelProps {
-  output: string;
-  isRunning: boolean;
-  isPlaybackMode: boolean;
-  onRunCode: () => void;
-}
-
 export interface AuthenticationProps {
   onSuccess: (user: UserObject) => void;
   onToggleMode: () => void;
@@ -142,17 +129,8 @@ export interface ChatInputProps {
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }
 
-export interface FileTabsProps {
-  files: Array<string>;
-  activeFile: string;
-  onSelectFile: (file: string) => void;
-  onAddFile: (fileName: string) => void;
-  isPlaybackMode: boolean;
-}
-
 export interface AnalyticsModalProps {
-  currentRoom: string;
-  onClose: () => void;
+  setShowAnalytics: (showAnalytics: boolean) => void;
 }
 
 export interface ExecutionStats {

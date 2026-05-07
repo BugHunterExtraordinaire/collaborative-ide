@@ -1,10 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
-import type { ChatProps, Message } from '../types/interfaces';
-import { type ChatHistoryArray } from '../types/arrays';
-import MessageBubble from './chat/MessageBubble';
-import ChatInput from './chat/ChatInput';
+import { useState, useEffect, useRef, useContext } from 'react';
+import type { Message, WorkspaceProps } from '../../types/interfaces';
+import { type ChatHistoryArray } from '../../types/arrays';
+import MessageBubble from '../chat/MessageBubble';
+import ChatInput from '../chat/ChatInput';
+import { WorkspaceContext } from '../../App';
 
-export default function Chat({ currentRoom, username, socket }: ChatProps) {
+export default function Chat() {
+
+  const { socket, currentRoom, user } = useContext(WorkspaceContext) as WorkspaceProps;
+
+  const username = user.username;
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -69,7 +75,7 @@ export default function Chat({ currentRoom, username, socket }: ChatProps) {
   return (
     <div className="flex flex-col h-full bg-zinc-900 border-t border-zinc-800">
       <div className="p-3 bg-zinc-800 border-b border-zinc-700 text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-2">
-        <span>Session Chat</span>
+        <span>Chat</span>
       </div>
       
       <div className="grow overflow-y-auto p-4 flex flex-col gap-3">

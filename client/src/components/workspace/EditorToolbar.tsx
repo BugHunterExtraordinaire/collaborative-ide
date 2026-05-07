@@ -1,36 +1,46 @@
-import { useState } from 'react';
-import { type EditorToolbarProps } from '../../types/interfaces';
+import { useContext, useState } from 'react';
+import type { WorkspaceProps } from '../../types/interfaces';
 import InstructorAnalyticsModal from './InstructorAnalyticsModal';
+import { WorkspaceContext } from '../../App';
 
-export default function EditorToolbar({
-  currentRoom, language, isPlaybackMode, setIsPlaybackMode,
-  historyLength, setPlaybackIndex, user, onLeaveRoom
-}: EditorToolbarProps) {
-  
+export default function EditorToolbar() {
+
+  const { user, currentRoom, isPlaybackMode, language, historyLogs, setCurrentRoom, setOutput, setFiles, setActiveFile, setIsRunning, setIsPlaybackMode, setPlaybackIndex } = useContext(WorkspaceContext) as WorkspaceProps;
+
   const [showAnalytics, setShowAnalytics] = useState(false);
   const isPrivileged = user.role === 'Instructor' || user.role === 'System Administrator';
+
+  const handleLeaveRoom = () => {
+    setCurrentRoom(null);
+    setOutput('System Ready. Awaiting execution...');
+    setFiles([]);
+    setActiveFile('');
+    setIsRunning(false);
+    setIsPlaybackMode(false);
+    setPlaybackIndex(0);
+  };
 
   return (
     <>
       <div className="px-5 py-2.5 bg-zinc-950 flex justify-between items-center border-b border-zinc-800">
-        
+
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 pr-4 border-r border-zinc-800">
             <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse"></span>
             <h3 className="m-0 text-sm font-bold text-zinc-100 tracking-wide">Collab-IDE</h3>
           </div>
-          
+
           <span className="text-zinc-500 text-xs font-mono bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
             ID: {currentRoom}
           </span>
-          
+
           <span className="text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-900/50 bg-blue-900/20 px-2 py-1 rounded">
             {language}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          
+
           {isPrivileged && (
             <button
               onClick={() => setShowAnalytics(true)}
@@ -43,20 +53,19 @@ export default function EditorToolbar({
           <button
             onClick={() => {
               setIsPlaybackMode(!isPlaybackMode);
-              setPlaybackIndex(Math.max(0, historyLength - 1));
+              setPlaybackIndex(Math.max(0, historyLogs.length - 1));
             }}
-            className={`px-3 py-1.5 text-xs font-semibold rounded transition-all cursor-pointer border ${
-              isPlaybackMode 
-                ? 'bg-orange-500/10 text-orange-400 border-orange-500/30 hover:bg-orange-500/20' 
+            className={`px-3 py-1.5 text-xs font-semibold rounded transition-all cursor-pointer border ${isPlaybackMode
+                ? 'bg-orange-500/10 text-orange-400 border-orange-500/30 hover:bg-orange-500/20'
                 : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white'
-            }`}
+              }`}
           >
             {isPlaybackMode ? '⏹ Exit Playback' : '▶ Playback Mode'}
           </button>
-          
+
           <div className="ml-1 pl-2 flex items-center gap-3">
             <button
-              onClick={onLeaveRoom}
+              onClick={handleLeaveRoom}
               className="px-3 py-1.5 bg-red-900/20 text-red-400 hover:bg-red-600 hover:text-white border border-red-900/50 text-xs font-bold rounded transition-all cursor-pointer"
             >
               Leave
@@ -66,9 +75,8 @@ export default function EditorToolbar({
       </div>
 
       {showAnalytics && (
-        <InstructorAnalyticsModal 
-          currentRoom={currentRoom} 
-          onClose={() => setShowAnalytics(false)} 
+        <InstructorAnalyticsModal
+          setShowAnalytics={setShowAnalytics}
         />
       )}
     </>
