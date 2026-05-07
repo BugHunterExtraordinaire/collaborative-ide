@@ -17,7 +17,7 @@ export default function LoginForm({ onSuccess, onToggleMode }: AuthenticationPro
         onSuccess(res.data.user);
         return `${res.data.message}, Welcome ${res.data.user.username}`;
       },
-      error: (err) => `${err.response.data.message}`
+      error: (err) => `${err?.response?.data?.message || "Error while connecting to server"}`
     });
   };
 

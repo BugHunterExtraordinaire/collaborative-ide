@@ -241,7 +241,7 @@ function App() {
   return (
     <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
       <div className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900">
-        <div className="absolute top-2 right-[41%] z-10 text-xs font-mono px-2 py-1 bg-black/50 rounded border border-zinc-700 flex items-center gap-2">
+        <div className="absolute top-10 right-[41%] z-10 text-xs font-mono px-2 py-1 bg-black/50 rounded border border-zinc-700 flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${yjsStatus === 'Connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
           {yjsStatus}
         </div>

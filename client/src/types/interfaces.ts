@@ -1,5 +1,6 @@
 import * as Y from 'yjs';
 
+import type { UseMutationResult } from '@tanstack/react-query';
 import { Socket } from 'socket.io-client';
 
 import type { SessionsArray, HistoryLogArray } from './arrays';
@@ -34,6 +35,28 @@ export interface DashboardProps {
   onLogout: () => void;
 }
 
+export interface SessionProps {
+  session: SessionObject;
+  isAdmin: boolean;
+  joinBtnText: string;
+}
+
+export interface CreateSessionFormProps {
+  handleCreate: React.SubmitEventHandler<HTMLFormElement>;
+  newRoomName: string;
+  setNewRoomName: (name: string) => void;
+  language: string;
+  setLanguage: (name: string) => void;
+  createBtnText: string;
+}
+
+export interface JoinSessionFormProps {
+  handleJoin: React.SubmitEventHandler<HTMLFormElement>;
+  joinId: string;
+  setJoinId: (joinId: string) => void;
+  joinBtnText: string;
+}
+
 export interface UserDashboardProps {
   user: UserObject;
   onJoinRoom: (sessionId: string) => void;
@@ -57,6 +80,11 @@ export interface DockerContainer {
   Image: string;
   State: string;
   Status: string;
+}
+
+export interface DockerContainerProps {
+  container: DockerContainer;
+  killContainerMutation: UseMutationResult<void, Error, string, unknown>;
 }
 
 export interface HeaderProps {

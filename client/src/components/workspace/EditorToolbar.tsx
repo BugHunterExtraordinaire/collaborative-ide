@@ -54,12 +54,7 @@ export default function EditorToolbar({
             {isPlaybackMode ? '⏹ Exit Playback' : '▶ Playback Mode'}
           </button>
           
-          <div className="ml-2 pl-4 border-l border-zinc-800 flex items-center gap-3">
-            <div className="flex flex-col items-end justify-center">
-              <span className="text-zinc-200 text-xs font-medium leading-none">{user.username}</span>
-              <span className="text-zinc-500 text-[9px] uppercase font-bold tracking-widest mt-1">{user.role}</span>
-            </div>
-            
+          <div className="ml-1 pl-2 flex items-center gap-3">
             <button
               onClick={onLeaveRoom}
               className="px-3 py-1.5 bg-red-900/20 text-red-400 hover:bg-red-600 hover:text-white border border-red-900/50 text-xs font-bold rounded transition-all cursor-pointer"

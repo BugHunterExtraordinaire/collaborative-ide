@@ -6,8 +6,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardHeader from './shared/DashboardHeader';
 import SessionForms from './shared/SessionForms';
 import SessionList from './shared/SessionList';
+import Container from './shared/Container';
 
-import { SpecificDashboardContext } from '../Dashboard';
+import { UserDashboardContext } from '../Dashboard';
 
 import type { UserDashboardProps } from '../../types/interfaces';
 import type { ContainerArray } from '../../types/arrays';
@@ -15,7 +16,7 @@ import type { ContainerArray } from '../../types/arrays';
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
 
-  const { user } = useContext(SpecificDashboardContext) as UserDashboardProps;
+  const { user } = useContext(UserDashboardContext) as UserDashboardProps;
 
   const { data: containers = [] } = useQuery<ContainerArray>({
     queryKey: ['docker-containers'],
@@ -61,21 +62,11 @@ export default function AdminDashboard() {
               ) : (
                 <ul className="list-none p-0 m-0 flex flex-col gap-2 max-h-75 overflow-y-auto">
                   {containers.map(container => (
-                    <li key={container.Id} className="p-3 bg-zinc-800 rounded border border-red-900/30 flex flex-col gap-2">
-                      <div className="flex justify-between items-start">
-                        <span className="text-xs font-mono text-zinc-300 break-all">{container.Id.substring(0, 12)}</span>
-                        <span className="text-[10px] bg-blue-900/50 text-blue-400 px-1.5 py-0.5 rounded uppercase">{container.State}</span>
-                      </div>
-                      <div className="text-sm font-bold text-white">{container.Image}</div>
-                      <div className="text-xs text-zinc-500">{container.Status}</div>
-                      <button 
-                        onClick={() => killContainerMutation.mutate(container.Id)} 
-                        disabled={killContainerMutation.isPending}
-                        className="mt-2 w-full py-1.5 bg-red-600/80 hover:bg-red-600 disabled:bg-zinc-600 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition-colors"
-                      >
-                        {killContainerMutation.isPending ? 'Killing...' : 'SIGKILL Container'}
-                      </button>
-                    </li>
+                    <Container 
+                      key={container.Id} 
+                      container={container}
+                      killContainerMutation={killContainerMutation}
+                    />
                   ))}
                 </ul>
               )}

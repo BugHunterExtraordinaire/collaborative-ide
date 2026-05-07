@@ -12,7 +12,7 @@ import { DashboardContext } from '../App';
 import type { DashboardProps, UserDashboardProps } from '../types/interfaces';
 import type { SessionsArray } from '../types/arrays';
 
-const SpecificDashboardContext = createContext<UserDashboardProps | null>(null);
+const UserDashboardContext = createContext<UserDashboardProps | null>(null);
 
 function Dashboard() {
 
@@ -68,7 +68,7 @@ function Dashboard() {
   };
 
   return (
-    <SpecificDashboardContext.Provider value={{
+    <UserDashboardContext.Provider value={{
       user,
       onJoinRoom,
       onLogout,
@@ -77,11 +77,11 @@ function Dashboard() {
       sessions,
     }}>
       {isAdmin ? <AdminDashboard /> : <UserDashboard />}
-    </SpecificDashboardContext.Provider>
+    </UserDashboardContext.Provider>
   );
 }
 
 export {
-  SpecificDashboardContext,
+  UserDashboardContext,
   Dashboard
 }

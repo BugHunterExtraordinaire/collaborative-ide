@@ -1,12 +1,12 @@
 import { useContext } from "react";
 
-import { SpecificDashboardContext } from "../../Dashboard";
+import { UserDashboardContext } from "../../Dashboard";
 
 import type { UserDashboardProps } from "../../../types/interfaces";
 
 export default function DashboardHeader() {
 
-  const { user, onLogout } = useContext(SpecificDashboardContext) as UserDashboardProps;
+  const { user, onLogout } = useContext(UserDashboardContext) as UserDashboardProps;
 
   const badgeStyle = 
     user.role === 'System Administrator' ? 'bg-red-600/20 text-red-500 border-red-500/50' : 
