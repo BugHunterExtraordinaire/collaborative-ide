@@ -15,7 +15,7 @@ export const setupYjsWebSocket = async (server: http.Server) => {
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
   const pubClient = createClient({ url: redisUrl });
   const subClient = pubClient.duplicate();
-  
+
   await Promise.all([pubClient.connect(), subClient.connect()]);
 
   const wss = new WebSocket.Server({ noServer: true });
@@ -23,6 +23,7 @@ export const setupYjsWebSocket = async (server: http.Server) => {
   server.on('upgrade', (request, socket, head) => {
     const pathname = request.url;
     if (pathname && pathname.startsWith('/yjs/')) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wss.handleUpgrade(request, socket as any, head, (ws) => {
         wss.emit('connection', ws, request);
       });
@@ -44,6 +45,7 @@ export const setupYjsWebSocket = async (server: http.Server) => {
     try {
       const { sessionId, awarenessArray } = JSON.parse(message);
       const ydoc = getYDoc(sessionId, false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const awareness = (ydoc as any).awareness;
 
       if (awareness) {
@@ -55,19 +57,23 @@ export const setupYjsWebSocket = async (server: http.Server) => {
     }
   });
 
+  const saveTimers = new Map<string, NodeJS.Timeout>();
+  const operationBatches = new Map<string, Uint8Array[]>();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   wss.on('connection', (ws: WebSocket, req: any) => {
     const docName = req.url.slice(5).split('?')[0];
     console.log(`CRDT connection established for session: ${docName}`);
 
     const ydoc = getYDoc(docName, false);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(ydoc as any).hasDatabaseWired) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (ydoc as any).hasDatabaseWired = true;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ydoc.on('update', async (update: Uint8Array, origin: any) => {
-        const updateDeltaBuffer = Buffer.from(update);
-        const fullStateBuffer = Buffer.from(Y.encodeStateAsUpdate(ydoc));
-
         if (origin !== 'redis' && origin !== 'db-load') {
           const payload = JSON.stringify({
             sessionId: docName,
@@ -77,25 +83,48 @@ export const setupYjsWebSocket = async (server: http.Server) => {
         }
 
         if (origin !== 'db-load') {
-          try {
-            await Session.findOneAndUpdate(
-              { sessionId: docName },
-              { state: fullStateBuffer },
-              { upsert: true }
-            );
-
-            await OperationLog.create({
-              sessionId: docName,
-              operationData: updateDeltaBuffer
-            });
-          } catch (saveErr) {
-            console.error('Error saving keystroke to MongoDB:', saveErr);
+          if (!operationBatches.has(docName)) {
+            operationBatches.set(docName, []);
           }
+          operationBatches.get(docName)!.push(update);
+
+          if (saveTimers.has(docName)) {
+            clearTimeout(saveTimers.get(docName)!);
+          }
+
+          saveTimers.set(docName, setTimeout(async () => {
+            try {
+              const fullStateBuffer = Buffer.from(Y.encodeStateAsUpdate(ydoc));
+              await Session.findOneAndUpdate(
+                { sessionId: docName },
+                { state: fullStateBuffer },
+                { upsert: true }
+              );
+
+              const batchToSave = operationBatches.get(docName) || [];
+              if (batchToSave.length > 0) {
+                
+                operationBatches.set(docName, []);
+
+                const mergedUpdate = Y.mergeUpdates(batchToSave);
+
+                await OperationLog.create({
+                  sessionId: docName,
+                  operationData: Buffer.from(mergedUpdate)
+                });
+              }
+
+            } catch (saveErr) {
+              console.error('Error saving state/logs to MongoDB:', saveErr);
+            }
+          }, 200)); 
         }
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const awareness = (ydoc as any).awareness;
       if (awareness) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         awareness.on('update', ({ added, updated, removed }: any, origin: any) => {
           if (origin !== 'redis') {
             const changedClients = added.concat(updated).concat(removed);

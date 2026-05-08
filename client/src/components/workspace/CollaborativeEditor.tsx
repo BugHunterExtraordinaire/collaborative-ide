@@ -13,6 +13,14 @@ const CURSOR_COLORS = [
   '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
 ];
 
+const getDeterministicColor = (username: string) => {
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return CURSOR_COLORS[Math.abs(hash) % CURSOR_COLORS.length];
+};
+
 export default function CollaborativeEditor() {
 
   const { user, provider, localDoc, safeActiveFile, language } = useContext(WorkspaceContext) as WorkspaceProps;
@@ -26,6 +34,8 @@ export default function CollaborativeEditor() {
   const [uniqueBlameUsers, setUniqueBlameUsers] = useState<Record<string, Contributor>>({});
 
   const isAdmin = user.role === 'System Administrator';
+  
+  const isPrivileged = user.role === 'Instructor' || user.role === 'System Administrator';
 
   const handleEditorDidMount: OnMount = (editor) => {
     setEditorInstance(editor);
@@ -35,7 +45,7 @@ export default function CollaborativeEditor() {
   useEffect(() => {
     if (!provider) return;
 
-    const userColor = CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
+    const userColor = getDeterministicColor(user.username);
     userColorRef.current = userColor;
 
     provider.awareness.setLocalStateField('user', {
@@ -97,11 +107,24 @@ export default function CollaborativeEditor() {
     const changeDisposable = editorInstance.onDidChangeModelContent((e) => {
       if (editorInstance.hasTextFocus()) {
         e.changes.forEach(change => {
+          const { startLineNumber, endLineNumber } = change.range;
+
+          if (endLineNumber > startLineNumber) {
+            Array.from(blameMap.keys()).forEach(key => {
+              const parts = key.split('::');
+              if (parts[0] === safeActiveFile) {
+                const line = parseInt(parts[1], 10);
+                if (line >= startLineNumber && line <= endLineNumber) {
+                  blameMap.delete(key);
+                }
+              }
+            });
+          }
+
           const lines = change.text.split('\n');
-          const startLine = change.range.startLineNumber;
 
           lines.forEach((lineText, index) => {
-            const currentLine = startLine + index;
+            const currentLine = startLineNumber + index;
             
             const addedChars = lineText.length;
             const points = addedChars > 0 ? addedChars : 1; 
@@ -121,6 +144,11 @@ export default function CollaborativeEditor() {
     });
     
     const updateDecorations = () => {
+      if (!isPrivileged) {
+        decorationsRef.current?.set([]);
+        return;
+      }
+
       const newDecorations: editor.IModelDeltaDecoration[] = [];
       const currentBlameState = blameMap.toJSON() as Record<string, Contributor>;
       
@@ -184,7 +212,7 @@ export default function CollaborativeEditor() {
       changeDisposable.dispose();
       blameMap.unobserve(updateDecorations);
     };
-  }, [editorInstance, localDoc, user, safeActiveFile]);
+  }, [editorInstance, localDoc, user, safeActiveFile, isPrivileged]);
 
   const dynamicCursorCSS = awarenessUsers.map(({ clientId, state }) => {
     if (!state || !state.user || !state.user.color) return '';
@@ -216,7 +244,7 @@ export default function CollaborativeEditor() {
     `;
   }).join('\n');
 
-  const dynamicBlameCSS = Object.values(uniqueBlameUsers).map((blameUser) => {
+  const dynamicBlameCSS = isPrivileged ? Object.values(uniqueBlameUsers).map((blameUser) => {
     const initials = blameUser.name.substring(0, 2).toUpperCase();
     const safeClass = blameUser.name.replace(/[^a-zA-Z0-9]/g, '');
     
@@ -241,7 +269,7 @@ export default function CollaborativeEditor() {
         content: '${initials}';
       }
     `;
-  }).join('\n');
+  }).join('\n') : '';
 
   return (
     <div className="h-full w-full relative">
@@ -258,7 +286,7 @@ export default function CollaborativeEditor() {
           wordWrap: 'on',
           padding: { top: 16 },
           readOnly: isAdmin,
-          glyphMargin: true,
+          glyphMargin: isPrivileged,
         }}
       />
     </div>

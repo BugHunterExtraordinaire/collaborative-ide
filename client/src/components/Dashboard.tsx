@@ -23,7 +23,7 @@ export default function Dashboard() {
   const { data: sessions = [] } = useQuery<SessionsArray>({
     queryKey: ['sessions'],
     queryFn: async () => {
-      const res = await axios.get("http://localhost:80/api/v1/sessions");
+      const res = await axios.get("/sessions");
       return res.data;
     }
   });

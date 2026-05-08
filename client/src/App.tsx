@@ -27,7 +27,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("/api/v1/auth/logout");
+      await axios.post("/auth/logout");
     } catch (error) {
       console.error("Logout failed", error);
     }
