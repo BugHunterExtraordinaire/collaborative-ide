@@ -141,6 +141,11 @@ export interface FileProps {
   setActiveFile: (file: string) => void;
 }
 
+export interface UserTrackingProps {
+  username: string;
+  stats: ExecutionStats;
+}
+
 export interface AwarenessState {
   user?: {
     name: string;
