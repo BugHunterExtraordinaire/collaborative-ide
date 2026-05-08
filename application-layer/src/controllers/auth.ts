@@ -23,11 +23,13 @@ export const loginUser: DefaultController = async (req, res) => {
 
   const token = user.generateJWT(jwtPayload);
 
-  res.cookie('ide_token', token, {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 6 * 60 * 60 * 1000
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 1000 * 60 * 60 * 24 
   });
 
   res.status(200).json({

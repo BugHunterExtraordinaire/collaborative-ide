@@ -20,11 +20,15 @@ dotenv.config({ quiet: true });
 const app = express();
 const server = http.createServer(app);
 
+app.set('trust proxy', 1);
+
 app.use(helmet());
+
+const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
 app.use(cors({
-  origin: true,
+  origin: allowedOrigin,
   credentials: true,
-}));
+}));;
 
 app.use(express.json());
 app.use(cookieParser());

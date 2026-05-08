@@ -9,9 +9,12 @@ import { registerChatEvents } from './events/chatEvents';
 import { registerExecutionEvents } from './events/executionEvents';
 
 export const setupSocketIO = async (server: http.Server) => {
+
+  const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
+
   const io = new Server(server, {
     cors: {
-      origin: true,
+      origin: allowedOrigin,
       methods: ["GET", "POST"],
       credentials: true,
     }
