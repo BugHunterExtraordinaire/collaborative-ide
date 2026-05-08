@@ -17,7 +17,7 @@ export const setupSocketIO = async (server: http.Server) => {
     }
   });
 
-  const pubClient = createClient({ url: 'redis://localhost:6379' });
+  const pubClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
   const subClient = pubClient.duplicate();
 
   try {
