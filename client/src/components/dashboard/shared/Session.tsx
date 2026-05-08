@@ -9,7 +9,7 @@ export default function Session({ session, isAdmin, joinBtnText }: SessionProps)
   const { user, onJoinRoom, handleDeleteSession } = useContext(UserDashboardContext) as UserDashboardProps;
 
   return (
-    <li key={session.sessionId} className="p-4 bg-zinc-800/50 hover:bg-zinc-800 transition-colors rounded-lg flex justify-between items-center border border-zinc-800/50 group">
+    <li className="p-4 bg-zinc-800/50 hover:bg-zinc-800 transition-colors rounded-lg flex justify-between items-center border border-zinc-800/50 group">
       <div>
         <div className="font-bold text-lg text-white flex items-center gap-2">
           {session.name}

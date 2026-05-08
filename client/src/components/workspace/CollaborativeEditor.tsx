@@ -92,7 +92,7 @@ export default function CollaborativeEditor() {
   useEffect(() => {
     if (!editorInstance || !localDoc || !safeActiveFile) return;
 
-    const blameMap = localDoc.getMap<Record<string, Contributor>>('blame-tracking-v2');
+    const blameMap = localDoc.getMap<Contributor>('blame-tracking-v3');
 
     const changeDisposable = editorInstance.onDidChangeModelContent((e) => {
       if (editorInstance.hasTextFocus()) {
@@ -106,23 +106,14 @@ export default function CollaborativeEditor() {
             const addedChars = lineText.length;
             const points = addedChars > 0 ? addedChars : 1; 
 
-            const lineKey = `${safeActiveFile}::${currentLine}`;
-            const currentLineData = blameMap.get(lineKey) || {};
-
-            const userContrib = currentLineData[user.username] || {
-              name: user.username,
-              color: userColorRef.current,
-              count: 0,
-              lastEdited: Date.now()
-            };
+            const lineKey = `${safeActiveFile}::${currentLine}::${user.username}`;
+            const existingContrib = blameMap.get(lineKey);
 
             blameMap.set(lineKey, {
-              ...currentLineData,
-              [user.username]: {
-                ...userContrib,
-                count: userContrib.count + points,
-                lastEdited: Date.now()
-              }
+              name: user.username,
+              color: userColorRef.current,
+              count: (existingContrib ? existingContrib.count : 0) + points,
+              lastEdited: Date.now()
             });
           });
         });
@@ -131,44 +122,55 @@ export default function CollaborativeEditor() {
     
     const updateDecorations = () => {
       const newDecorations: editor.IModelDeltaDecoration[] = [];
-      const currentBlameState = blameMap.toJSON() as Record<string, Record<string, Contributor>>;
+      const currentBlameState = blameMap.toJSON() as Record<string, Contributor>;
       
       const fileUniqueUsers: Record<string, Contributor> = {};
+      const aggregatedByLine: Record<string, Contributor[]> = {};
 
-      Object.entries(currentBlameState).forEach(([key, contributors]) => {
-        const [file, lineStr] = key.split('::');
+      Object.entries(currentBlameState).forEach(([key, contributor]) => {
+        const parts = key.split('::');
+        if (parts.length < 3) return;
+        const file = parts[0];
+        const lineStr = parts[1];
 
         if (file === safeActiveFile) {
-          const line = parseInt(lineStr, 10);
-          if (isNaN(line)) return;
-
-          const sortedContributors = Object.values(contributors).sort((a, b) => {
-            if (b.count !== a.count) return b.count - a.count;
-            return b.lastEdited - a.lastEdited;
-          });
-
-          if (sortedContributors.length === 0) return;
-
-          const primary = sortedContributors[0];
-          const safeClass = primary.name.replace(/[^a-zA-Z0-9]/g, '');
-
-          sortedContributors.forEach(c => {
-            if (!fileUniqueUsers[c.name]) fileUniqueUsers[c.name] = c;
-          });
-
-          const hoverMarkdown = sortedContributors.map((c, i) => 
-            `${i === 0 ? '🏆' : '•'} **${c.name}**: ${c.count} contributions`
-          ).join('\n\n');
-
-          newDecorations.push({
-            range: new Range(line, 1, line, 1),
-            options: {
-              isWholeLine: false,
-              glyphMarginClassName: `blame-marker-${safeClass}`,
-              glyphMarginHoverMessage: { value: `### Line Authors\n\n${hoverMarkdown}` }
-            }
-          });
+          if (!aggregatedByLine[lineStr]) {
+            aggregatedByLine[lineStr] = [];
+          }
+          aggregatedByLine[lineStr].push(contributor);
         }
+      });
+
+      Object.entries(aggregatedByLine).forEach(([lineStr, contributors]) => {
+        const line = parseInt(lineStr, 10);
+        if (isNaN(line)) return;
+
+        const sortedContributors = contributors.sort((a, b) => {
+          if (b.count !== a.count) return b.count - a.count;
+          return b.lastEdited - a.lastEdited;
+        });
+
+        if (sortedContributors.length === 0) return;
+
+        const primary = sortedContributors[0];
+        const safeClass = primary.name.replace(/[^a-zA-Z0-9]/g, '');
+
+        sortedContributors.forEach(c => {
+          if (!fileUniqueUsers[c.name]) fileUniqueUsers[c.name] = c;
+        });
+
+        const hoverMarkdown = sortedContributors.map((c, i) => 
+          `${i === 0 ? '🏆' : '•'} **${c.name}**: ${c.count} contributions`
+        ).join('\n\n');
+
+        newDecorations.push({
+          range: new Range(line, 1, line, 1),
+          options: {
+            isWholeLine: false,
+            glyphMarginClassName: `blame-marker-${safeClass}`,
+            glyphMarginHoverMessage: { value: `### Line Authors\n\n${hoverMarkdown}` }
+          }
+        });
       });
 
       setUniqueBlameUsers(fileUniqueUsers);
@@ -214,12 +216,16 @@ export default function CollaborativeEditor() {
     `;
   }).join('\n');
 
-  const dynamicBlameCSS = Object.values(uniqueBlameUsers).map((user) => {
-    const initials = user.name.substring(0, 2).toUpperCase();
-    const safeClass = user.name.replace(/[^a-zA-Z0-9]/g, '');
+  const dynamicBlameCSS = Object.values(uniqueBlameUsers).map((blameUser) => {
+    const initials = blameUser.name.substring(0, 2).toUpperCase();
+    const safeClass = blameUser.name.replace(/[^a-zA-Z0-9]/g, '');
+    
+    const activeMatch = awarenessUsers.find(a => a.state.user && a.state.user.name === blameUser.name);
+    const liveColor = activeMatch?.state.user?.color || blameUser.color;
+
     return `
       .blame-marker-${safeClass} {
-        background-color: ${user.color} !important;
+        background-color: ${liveColor} !important;
         color: #ffffff !important;
         font-size: 10px;
         font-weight: 900;
