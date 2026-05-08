@@ -6,6 +6,9 @@ export const registerRoomEvents = (socket: Socket) => {
   socket.on('join-session', async (sessionId, username) => {
     socket.join(sessionId);
 
+    socket.data.sessionId = sessionId;
+    socket.data.username = username;
+
     try {
       const session = await Session.findOne({ sessionId: sessionId });
       if (session && session.chatHistory) {
@@ -21,6 +24,10 @@ export const registerRoomEvents = (socket: Socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
+    const { sessionId, username } = socket.data;
+    
+    if (sessionId && username) {
+      socket.to(sessionId).emit('user-left', { username });
+    }
   });
 };

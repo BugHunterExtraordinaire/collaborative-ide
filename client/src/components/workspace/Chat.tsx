@@ -38,6 +38,16 @@ export default function Chat() {
       }]);
     });
 
+    socket.on('user-left', (data: { username: string }) => {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString() + Math.random(),
+        username: 'System',
+        text: `${data.username} left the session.`,
+        timestamp: new Date().toISOString(),
+        isSystem: true
+      }]);
+    });
+
     socket.on('receive-message', (data: { username: string, message: string, timestamp: string }) => {
       setMessages(prev => [...prev, {
         id: Date.now().toString() + Math.random(),
@@ -52,6 +62,7 @@ export default function Chat() {
     return () => {
       socket.off('chat-history');
       socket.off('user-joined');
+      socket.off('user-left');
       socket.off('receive-message');
     };
   }, [socket, currentRoom, username]);
