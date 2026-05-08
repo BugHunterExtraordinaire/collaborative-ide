@@ -9,6 +9,7 @@ import { DashboardContext } from './contexts/DashboardContext';
 
 import { type UserObject } from './types/interfaces';
 
+axios.defaults.baseURL = '/api/v1';
 axios.defaults.withCredentials = true;
 
 export default function App() {

@@ -14,8 +14,8 @@ export default function RegisterForm({ onSuccess, onToggleMode }: Authentication
   const handleSubmit: React.SubmitEventHandler = async (e) => {
     e.preventDefault();
     toast.promise(async () => {
-      await axios.post("http://localhost:80/api/v1/auth/register", { username, email, password, role });
-      const loginRes = await axios.post("http://localhost:80/api/v1/auth/login", { email, password });
+      await axios.post("/auth/register", { username, email, password, role });
+      const loginRes = await axios.post("/auth/login", { email, password });
       onSuccess(loginRes.data.user)
     }
       , {

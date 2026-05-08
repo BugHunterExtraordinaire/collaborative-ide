@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   const createSessionMutation = useMutation({
     mutationFn: async ({ name, language }: { name: string, language: string }) => {
-      const res = await axios.post("/api/v1/sessions", { name, language });
+      const res = await axios.post("/sessions", { name, language });
       return res.data;
     },
     onSuccess: (data) => {
@@ -44,7 +44,7 @@ export default function Dashboard() {
 
   const deleteSessionMutation = useMutation({
     mutationFn: async (sessionId: string) => {
-      await axios.delete(`/api/v1/sessions/${sessionId}`, { data: { role: user.role } });
+      await axios.delete(`/sessions/${sessionId}`, { data: { role: user.role } });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });

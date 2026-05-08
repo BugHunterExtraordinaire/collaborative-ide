@@ -11,7 +11,7 @@ export default function LoginForm({ onSuccess, onToggleMode }: AuthenticationPro
 
   const handleSubmit: React.SubmitEventHandler = async (e) => {
     e.preventDefault();
-    toast.promise(axios.post("http://localhost:80/api/v1/auth/login", { email, password }), {
+    toast.promise(axios.post("/auth/login", { email, password }), {
       loading: "Logging in...",
       success: (res) => {
         onSuccess(res.data.user);
