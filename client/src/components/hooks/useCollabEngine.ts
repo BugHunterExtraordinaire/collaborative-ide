@@ -20,7 +20,7 @@ export function useCollabEngine(currentRoom: string | null) {
     const networkDoc = new Y.Doc();
 
     const newProvider = new WebsocketProvider(
-      "ws://localhost:80",
+      `ws://${window.location.host}`,
       `yjs/${currentRoom}`,
       networkDoc
     );
