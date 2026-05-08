@@ -17,11 +17,13 @@ export const executeCode: DefaultController = async (req, res) => {
   let executionCmd: Array<string> = [];
 
   const fileCreationCmds = files.map(f => {
+    const safeName = f.name.replace(/[^a-zA-Z0-9_.-]/g, '');
     const b64 = Buffer.from(f.content).toString('base64');
-    return `echo '${b64}' | base64 -d > ${f.name}`;
+    return `echo '${b64}' | base64 -d > ${safeName}`;
   }).join(' && ');
 
-  const mainFile = files.find(f => f.name.startsWith('main'))?.name || files[0].name;
+  const rawMainFile = files.find(f => f.name.startsWith('main'))?.name || files[0].name;
+  const mainFile = rawMainFile.replace(/[^a-zA-Z0-9_.-]/g, '');
 
   if (language === 'python') {
     dockerImg = 'python:3.9-alpine';
@@ -48,8 +50,9 @@ export const executeCode: DefaultController = async (req, res) => {
       Env: ["FORCE_COLOR=0"],
       Tty: true,
       HostConfig: {
-        Memory: 128 * 1024 * 1024,
-        NetworkMode: "none"
+        Memory: 128 * 1024 * 1024, 
+        NanoCpus: 500000000,       
+        NetworkMode: 'none'
       }
     });
 
@@ -59,8 +62,9 @@ export const executeCode: DefaultController = async (req, res) => {
     const timeoutLimit = 10000;
 
     const timeoutPromise = new Promise((_, reject) => {
-      timer = setTimeout(() => {
-        reject(new Error("Execution timed out (Limit: 10 seconds)."));
+      timer = setTimeout(async () => {
+        await container?.kill();
+        reject(new Error("Execution timed out (Limit: 10 seconds). Infinite loops are not allowed."));
       }, timeoutLimit);
     });
 
@@ -70,6 +74,7 @@ export const executeCode: DefaultController = async (req, res) => {
     ]);
 
     clearTimeout(timer!);
+    
     const logs = await container.logs({ stdout: true, stderr: true });
 
     const rawLogs = Buffer.isBuffer(logs) ? logs.toString('utf8') : String(logs);
