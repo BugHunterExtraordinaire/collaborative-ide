@@ -5,7 +5,8 @@ import { MonacoBinding } from 'y-monaco';
 import Editor, { type OnMount } from '@monaco-editor/react';
 
 import type { ActiveUser, AwarenessState, Contributor, WorkspaceProps } from '../../types/interfaces';
-import { WorkspaceContext } from '../../App';
+
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 const CURSOR_COLORS = [
   '#f59e0b', '#3b82f6', '#10b981', '#ef4444',

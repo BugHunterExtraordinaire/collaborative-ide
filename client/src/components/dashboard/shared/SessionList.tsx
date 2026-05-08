@@ -2,7 +2,7 @@ import { useContext } from "react";
 
 import Session from "./Session";
 
-import { UserDashboardContext } from "../../Dashboard";
+import { UserDashboardContext } from "../../../contexts/DashboardContext";
 
 import type { UserDashboardProps } from "../../../types/interfaces";
 

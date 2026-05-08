@@ -1,20 +1,18 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-import { createContext, useContext } from 'react';
+import { useContext } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
 import UserDashboard from './dashboard/UserDashboard';
 import AdminDashboard from './dashboard/AdminDashboard';
 
-import { DashboardContext } from '../App';
+import { DashboardContext, UserDashboardContext } from '../contexts/DashboardContext';
 
-import type { DashboardProps, UserDashboardProps } from '../types/interfaces';
+import type { DashboardProps } from '../types/interfaces';
 import type { SessionsArray } from '../types/arrays';
 
-const UserDashboardContext = createContext<UserDashboardProps | null>(null);
-
-function Dashboard() {
+export default function Dashboard() {
 
   const queryClient = useQueryClient();
 
@@ -79,9 +77,4 @@ function Dashboard() {
       {isAdmin ? <AdminDashboard /> : <UserDashboard />}
     </UserDashboardContext.Provider>
   );
-}
-
-export {
-  UserDashboardContext,
-  Dashboard
 }

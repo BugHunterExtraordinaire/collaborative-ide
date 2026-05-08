@@ -3,7 +3,7 @@ import { useContext, useState } from 'react';
 import CreateSessionForm from './CreateSessionForm';
 import JoinSessionForm from './JoinSessionForm';
 
-import { UserDashboardContext } from '../../Dashboard';
+import { UserDashboardContext } from '../../../contexts/DashboardContext';
 
 import type { UserDashboardProps } from '../../../types/interfaces';
 

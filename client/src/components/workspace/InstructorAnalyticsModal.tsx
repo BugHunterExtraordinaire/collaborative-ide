@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import type { AnalyticsModalProps, ExecutionStats, WorkspaceProps } from '../../types/interfaces';
 import { useContext } from 'react';
-import { WorkspaceContext } from '../../App';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 export default function InstructorAnalyticsModal({ setShowAnalytics }: AnalyticsModalProps) {
 

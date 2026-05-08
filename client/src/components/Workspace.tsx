@@ -1,7 +1,10 @@
-import { useContext } from "react";
+import * as Y from 'yjs';
+import axios from 'axios';
+import { io, Socket } from 'socket.io-client';
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { Editor } from "@monaco-editor/react";
-
 import EditorToolbar from "./workspace/EditorToolbar";
 import FileTabs from "./workspace/FileTabs";
 import PlaybackScrubber from "./workspace/PlaybackScrubber";
@@ -9,48 +12,137 @@ import CollaborativeEditor from "./workspace/CollaborativeEditor";
 import TerminalPanel from "./workspace/TerminalPanel";
 import Chat from "./workspace/Chat";
 
-import { WorkspaceContext } from "../App";
+import { useCollabEngine } from './hooks/useCollabEngine';
+import { WorkspaceContext } from '../contexts/WorkspaceContext';
+import type { UserObject } from "../types/interfaces";
+import type { HistoryLogArray } from '../types/arrays';
 
-import type { WorkspaceProps } from "../types/interfaces";
+interface WorkspaceComponentProps {
+  currentRoom: string;
+  user: UserObject;
+  setCurrentRoom: (room: string | null) => void;
+}
 
-export default function Workspace() {
+export default function Workspace({ currentRoom, user, setCurrentRoom }: WorkspaceComponentProps) {
+  // MIGRATED FROM APP.TSX: Session-level state
+  const [files, setFiles] = useState<Array<string>>([]);
+  const [activeFile, setActiveFile] = useState<string>('');
+  const [isPlaybackMode, setIsPlaybackMode] = useState<boolean>(false);
+  const [playbackIndex, setPlaybackIndex] = useState<number>(0);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
-  const { yjsStatus, isPlaybackMode, language, safeActiveFile, playbackCode } = useContext(WorkspaceContext) as WorkspaceProps;
+  const { status: yjsStatus, localDoc, provider, isSynced } = useCollabEngine(currentRoom);
+
+  useEffect(() => {
+    if (currentRoom && user) {
+      const newSocket = io("http://localhost:80", { forceNew: true });
+      newSocket.on('connect', () => setSocket(newSocket));
+
+      return () => {
+        newSocket.disconnect();
+        setSocket(null);
+      };
+    }
+  }, [currentRoom, user]);
+
+  const { data: historyLogs = [] } = useQuery<HistoryLogArray>({
+    queryKey: ['session-history', currentRoom],
+    queryFn: async () => {
+      const res = await axios.get(`http://localhost:80/api/v1/sessions/${currentRoom}/history`);
+      setPlaybackIndex(Math.max(0, res.data.length - 1));
+      return res.data;
+    },
+    enabled: isPlaybackMode && !!currentRoom,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: sessionDetails, isSuccess: isSessionLoaded } = useQuery({
+    queryKey: ['session-details', currentRoom],
+    queryFn: async () => {
+      const res = await axios.get(`http://localhost:80/api/v1/sessions/${currentRoom}`);
+      return res.data;
+    },
+    enabled: !!currentRoom,
+  });
+
+  const language: string = (sessionDetails?.language || 'JavaScript').toLowerCase();
+
+  useEffect(() => {
+    if (!localDoc) return;
+    const yFiles = localDoc.getArray<string>('file-list');
+
+    const updateFiles = () => {
+      const syncedFiles = yFiles.toArray();
+      const uniqueFiles = Array.from(new Set(syncedFiles));
+      if (uniqueFiles.length > 0) {
+        setFiles(uniqueFiles);
+        setActiveFile(prevActive => (!prevActive || !uniqueFiles.includes(prevActive)) ? uniqueFiles[0] : prevActive);
+      }
+    };
+
+    yFiles.observe(updateFiles);
+    updateFiles();
+
+    if (isSynced && isSessionLoaded && yFiles.length === 0) {
+      const defaultFile = language === 'python' ? 'main.py' : language === 'javascript' ? 'main.js' : 'main.cpp';
+      if (!yFiles.toArray().includes(defaultFile)) yFiles.push([defaultFile]);
+    }
+
+    return () => yFiles.unobserve(updateFiles);
+  }, [localDoc, language, isSynced, isSessionLoaded]);
+
+  const safeActiveFile = activeFile || files[0] || '';
+
+  const playbackCode = useMemo(() => {
+    if (!isPlaybackMode || historyLogs.length === 0) return 'Loading history...';
+    const tempDoc = new Y.Doc();
+    const tempText = tempDoc.getText(safeActiveFile);
+    for (let i = 0; i <= playbackIndex; i++) {
+      const log = historyLogs[i];
+      if (log && log.operationData && log.operationData.data) {
+        const updateBuffer = new Uint8Array(log.operationData.data);
+        Y.applyUpdate(tempDoc, updateBuffer);
+      }
+    }
+    return tempText.toString();
+  }, [playbackIndex, historyLogs, isPlaybackMode, safeActiveFile]);
 
   return (
-    <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
-      <div className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900">
-        <div className="absolute top-10 right-[41%] z-10 text-xs font-mono px-2 py-1 bg-black/50 rounded border border-zinc-700 flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${yjsStatus === 'Connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
-          {yjsStatus}
+    <WorkspaceContext.Provider value={{
+      yjsStatus, currentRoom, language, isPlaybackMode, playbackIndex,
+      playbackCode, localDoc, provider, socket, historyLogs, user, files,
+      safeActiveFile, setActiveFile, setIsPlaybackMode, setPlaybackIndex,
+      setCurrentRoom, setFiles
+    }}>
+      <div className="flex h-screen bg-black text-white font-sans overflow-hidden">
+        <div className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900">
+          <div className="absolute top-10 right-[41%] z-10 text-xs font-mono px-2 py-1 bg-black/50 rounded border border-zinc-700 flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${yjsStatus === 'Connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+            {yjsStatus}
+          </div>
+
+          <EditorToolbar />
+          <FileTabs />
+          {isPlaybackMode && <PlaybackScrubber /> }
+
+          <div className="grow relative">
+            {isPlaybackMode ? (
+              <Editor
+                height="100%" theme="vs-dark" language={language.toLowerCase()}
+                path={safeActiveFile} value={playbackCode}
+                options={{ readOnly: true, minimap: { enabled: false }, fontSize: 14 }}
+              />
+            ) : ( <CollaborativeEditor /> )}
+          </div>
         </div>
 
-        <EditorToolbar />
-
-        <FileTabs />
-
-        {isPlaybackMode && <PlaybackScrubber /> }
-
-        <div className="grow relative">
-          {isPlaybackMode ? (
-            <Editor
-              height="100%"
-              theme="vs-dark"
-              language={language.toLowerCase()}
-              path={safeActiveFile}
-              value={playbackCode}
-              options={{ readOnly: true, minimap: { enabled: false }, fontSize: 14 }}
-            />
-          ) : ( <CollaborativeEditor /> )}
+        <div className="w-2/5 flex flex-col bg-zinc-900">
+          <TerminalPanel />
+          <div className="h-1/2 flex flex-col border-t border-zinc-800">
+            <Chat />
+          </div>
         </div>
       </div>
-
-      <div className="w-2/5 flex flex-col bg-zinc-900">
-        <TerminalPanel />
-        <div className="h-1/2 flex flex-col border-t border-zinc-800">
-          <Chat />
-        </div>
-      </div>
-    </div>
+    </WorkspaceContext.Provider>
   );
 }

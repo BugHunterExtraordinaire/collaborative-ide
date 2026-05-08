@@ -61,8 +61,6 @@ export interface WorkspaceProps {
   playbackCode: string;
   localDoc: Y.Doc | null;
   provider: WebsocketProvider | null;
-  output: string;
-  isRunning: boolean;
   socket: Socket | null;
   historyLogs: HistoryLogArray;
   user: UserObject;
@@ -72,9 +70,7 @@ export interface WorkspaceProps {
   setIsPlaybackMode: (isPlaybackMode: boolean) => void;
   setPlaybackIndex: (playbackIndex: number) => void;
   setCurrentRoom: (currentRoom: string | null) => void;
-  setOutput: (output: string) => void;
   setFiles: (files: Array<string>) => void;
-  setIsRunning: (isRunning: boolean) => void;
 }
 
 export interface UserDashboardProps {

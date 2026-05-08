@@ -3,7 +3,7 @@ import type { Message, WorkspaceProps } from '../../types/interfaces';
 import { type ChatHistoryArray } from '../../types/arrays';
 import MessageBubble from '../chat/MessageBubble';
 import ChatInput from '../chat/ChatInput';
-import { WorkspaceContext } from '../../App';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 export default function Chat() {
 

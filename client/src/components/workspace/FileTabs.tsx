@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import type { WorkspaceProps } from '../../types/interfaces';
-import { WorkspaceContext } from '../../App';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 export default function FileTabs() {
 

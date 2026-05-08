@@ -8,7 +8,7 @@ import SessionForms from './shared/SessionForms';
 import SessionList from './shared/SessionList';
 import Container from './shared/Container';
 
-import { UserDashboardContext } from '../Dashboard';
+import { UserDashboardContext } from '../../contexts/DashboardContext';
 
 import type { UserDashboardProps } from '../../types/interfaces';
 import type { ContainerArray } from '../../types/arrays';

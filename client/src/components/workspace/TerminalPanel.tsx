@@ -1,12 +1,13 @@
 import axios from 'axios';
-
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import type { WorkspaceProps } from '../../types/interfaces';
-import { WorkspaceContext } from '../../App';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 export default function TerminalPanel() {
+  const { localDoc, files, language, currentRoom, user, socket, isPlaybackMode } = useContext(WorkspaceContext) as WorkspaceProps;
 
-  const { localDoc, files, language, currentRoom, user, socket, isRunning, isPlaybackMode, output, setIsRunning, setOutput } = useContext(WorkspaceContext) as WorkspaceProps;
+  const [output, setOutput] = useState<string>('System Ready. Awaiting execution...');
+  const [isRunning, setIsRunning] = useState<boolean>(false);
 
   const handleRunCode = async () => {
     if (!localDoc) return;
@@ -64,6 +65,10 @@ export default function TerminalPanel() {
     }
   };
 
+  socket?.on("receive-execution", ({ output }) => {
+    setOutput(output);
+  });
+
   return (
     <div className="h-1/2 flex flex-col border-b border-zinc-800">
       <div className="p-3 bg-zinc-800 border-b border-zinc-700 flex justify-between items-center">
@@ -71,11 +76,10 @@ export default function TerminalPanel() {
         <button
           onClick={handleRunCode}
           disabled={isRunning || isPlaybackMode}
-          className={`px-4 py-1.5 text-sm font-bold rounded transition-colors ${
-            isRunning || isPlaybackMode 
-              ? 'bg-zinc-600 cursor-not-allowed text-zinc-400' 
+          className={`px-4 py-1.5 text-sm font-bold rounded transition-colors ${isRunning || isPlaybackMode
+              ? 'bg-zinc-600 cursor-not-allowed text-zinc-400'
               : 'bg-blue-600 hover:bg-blue-700 cursor-pointer text-white'
-          }`}
+            }`}
         >
           {isRunning ? 'Running...' : 'Run Code ▶'}
         </button>
