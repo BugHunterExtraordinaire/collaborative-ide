@@ -16,10 +16,10 @@ const ExecutionService = {
     let execStatus = 'Success';
     let statusCode = 200;
 
-    const runnerUrl = process.env.EXECUTION_RUNNER_URL || 'http://localhost:5000/execute';
+    const runnerUrl = process.env.EXECUTION_RUNNER_URL || 'http://localhost:5000';
 
     try {
-      const runnerResponse = await axios.post(runnerUrl, { files, language });
+      const runnerResponse = await axios.post(`${runnerUrl}/execute`, { files, language });
       
       finalOutput = runnerResponse.data.output || '';
       

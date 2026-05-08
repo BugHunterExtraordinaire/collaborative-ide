@@ -12,7 +12,8 @@ import OperationLog from '../models/OperationLog';
 const { setupWSConnection, getYDoc } = require('y-websocket/bin/utils');
 
 export const setupYjsWebSocket = async (server: http.Server) => {
-  const pubClient = createClient({ url: 'redis://localhost:6379' });
+  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+  const pubClient = createClient({ url: redisUrl });
   const subClient = pubClient.duplicate();
   
   await Promise.all([pubClient.connect(), subClient.connect()]);
