@@ -25,7 +25,7 @@ export const loginUser: DefaultController = async (req, res) => {
 
   const isProduction = process.env.NODE_ENV === 'production';
 
-  res.cookie('token', token, {
+  res.cookie('ide_token', token, {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? 'none' : 'lax',
