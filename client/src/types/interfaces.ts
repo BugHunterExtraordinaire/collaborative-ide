@@ -135,6 +135,12 @@ export interface ExecutionStats {
   errors: number;
 }
 
+export interface FileProps {
+  file: string;
+  safeActiveFile: string;
+  setActiveFile: (file: string) => void;
+}
+
 export interface AwarenessState {
   user?: {
     name: string;
