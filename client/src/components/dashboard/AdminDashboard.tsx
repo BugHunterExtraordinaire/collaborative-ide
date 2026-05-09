@@ -21,7 +21,7 @@ export default function AdminDashboard() {
   const { data: containers = [] } = useQuery<ContainerArray>({
     queryKey: ['docker-containers'],
     queryFn: async () => {
-      const res = await axios.get("http://localhost:80/api/v1/system/containers");
+      const res = await axios.get("/system/containers");
       return res.data;
     },
     refetchInterval: 5000,
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
 
   const killContainerMutation = useMutation({
     mutationFn: async (containerId: string) => {
-      await axios.delete(`http://localhost:80/api/v1/system/containers/${containerId}`);
+      await axios.delete(`/system/containers/${containerId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker-containers'] });

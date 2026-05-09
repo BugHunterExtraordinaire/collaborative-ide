@@ -14,14 +14,8 @@ import Chat from "./workspace/Chat";
 
 import { useCollabEngine } from './hooks/useCollabEngine';
 import { WorkspaceContext } from '../contexts/WorkspaceContext';
-import type { UserObject } from "../types/interfaces";
+import type { WorkspaceComponentProps } from "../types/interfaces";
 import type { HistoryLogArray } from '../types/arrays';
-
-interface WorkspaceComponentProps {
-  currentRoom: string;
-  user: UserObject;
-  setCurrentRoom: (room: string | null) => void;
-}
 
 export default function Workspace({ currentRoom, user, setCurrentRoom }: WorkspaceComponentProps) {
   const [files, setFiles] = useState<Array<string>>([]);
@@ -64,7 +58,7 @@ export default function Workspace({ currentRoom, user, setCurrentRoom }: Workspa
     enabled: !!currentRoom,
   });
 
-  const language: string = (sessionDetails?.language || 'JavaScript').toLowerCase();
+  const language: string = (sessionDetails?.session?.language || 'JavaScript').toLowerCase();
 
   useEffect(() => {
     if (!localDoc) return;

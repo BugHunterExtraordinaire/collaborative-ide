@@ -135,6 +135,12 @@ export interface ExecutionStats {
   errors: number;
 }
 
+export interface WorkspaceComponentProps {
+  currentRoom: string;
+  user: UserObject;
+  setCurrentRoom: (room: string | null) => void;
+}
+
 export interface FileProps {
   file: string;
   safeActiveFile: string;

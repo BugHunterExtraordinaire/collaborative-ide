@@ -12,7 +12,7 @@ export default function InstructorAnalyticsModal({ setShowAnalytics }: Analytics
   const { data, isLoading, isError } = useQuery({
     queryKey: ['session-analytics', currentRoom],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:80/api/v1/sessions/${currentRoom}/analytics`);
+      const res = await axios.get(`/sessions/${currentRoom}/analytics`);
       return res.data;
     },
     enabled: !!currentRoom,
