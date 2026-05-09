@@ -34,7 +34,6 @@ export default function CollaborativeEditor() {
   const [uniqueBlameUsers, setUniqueBlameUsers] = useState<Record<string, Contributor>>({});
 
   const isAdmin = user.role === 'System Administrator';
-  
   const isPrivileged = user.role === 'Instructor' || user.role === 'System Administrator';
 
   const handleEditorDidMount: OnMount = (editor) => {
@@ -48,10 +47,13 @@ export default function CollaborativeEditor() {
     const userColor = getDeterministicColor(user.username);
     userColorRef.current = userColor;
 
-    provider.awareness.setLocalStateField('user', {
-      name: user.username,
-      color: userColor
-    });
+    if (!isAdmin) {
+      provider.awareness.setLocalStateField('user', {
+        name: user.username,
+        color: userColor,
+        role: user.role
+      });
+    }
 
     const updateAwareness = () => {
       const rawStates = Array.from(provider.awareness.getStates().entries());
@@ -74,7 +76,7 @@ export default function CollaborativeEditor() {
       provider.awareness.off('change', updateAwareness);
       provider.awareness.setLocalState(null); 
     };
-  }, [provider, user]);
+  }, [provider, user, isAdmin]);
 
   useEffect(() => {
     if (!editorInstance || !localDoc || !provider || !safeActiveFile) return;
@@ -216,7 +218,14 @@ export default function CollaborativeEditor() {
 
   const dynamicCursorCSS = awarenessUsers.map(({ clientId, state }) => {
     if (!state || !state.user || !state.user.color) return '';
-    const { color, name } = state.user;
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { color, name, role } = state.user as any;
+
+    if (role === 'System Administrator') return '';
+
+    if (name === user.username) return '';
+
     return `
       .yRemoteSelection-${clientId} { background-color: ${color}40 !important; }
       .yRemoteSelectionHead-${clientId} {
