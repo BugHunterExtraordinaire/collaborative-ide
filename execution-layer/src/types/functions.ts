@@ -1,4 +1,5 @@
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 
-export type DefaultController = (req: Request, res: Response) => Promise<void>;
+export type DefaultController = (req: Request, res: Response, next?: NextFunction) => Promise<void>;
+export type ErrorHandlerFunction = (err: any, req: Request, res: Response, next: NextFunction) => Promise<void>;
 export type DockerImageFunction = (imageName: string) => Promise<void>;

@@ -1,17 +1,20 @@
 import Docker from 'dockerode';
 
+import { config } from '../config/env';
 import { docker, ensureImageExists } from '../services/dockerService';
 
 import { ExecutionRequest } from '../types/interfaces';
 import { DefaultController } from '../types/functions';
+import { ApiError, 
+         ExecutionTimeoutError, 
+         MissingRequestBodyInfoError, 
+         UnsupportedLanguageError 
+        } from '../types/errors';
 
-export const executeCode: DefaultController = async (req, res) => {
+export const executeCode: DefaultController = async (req, res, next) => {
   const { files, language } = req.body as ExecutionRequest;
 
-  if (!files || files.length === 0 || !language) {
-    res.status(400).json({ message: "Error: please provide files and language." });
-    return;
-  }
+  if (!files || files.length === 0 || !language) throw new MissingRequestBodyInfoError("Please provide all the files and language");
 
   let dockerImg: string = "";
   let executionCmd: Array<string> = [];
@@ -35,8 +38,7 @@ export const executeCode: DefaultController = async (req, res) => {
     dockerImg = 'frolvlad/alpine-gxx';
     executionCmd = ['sh', '-c', `${fileCreationCmds} && g++ *.cpp -o main && ./main`];
   } else {
-    res.status(400).json({ message: "Error: Unsupported language." });
-    return;
+    throw new UnsupportedLanguageError("Unsupported language please choose one of the supported languages");
   }
 
   let container: Docker.Container | null = null;
@@ -50,8 +52,8 @@ export const executeCode: DefaultController = async (req, res) => {
       Env: ["FORCE_COLOR=0"],
       Tty: true,
       HostConfig: {
-        Memory: 128 * 1024 * 1024, 
-        NanoCpus: 500000000,       
+        Memory: config.EXEC_MEMORY_MB * 1024 * 1024, 
+        NanoCpus: config.EXEC_CPUS * 1e9,       
         NetworkMode: 'none'
       }
     });
@@ -59,13 +61,12 @@ export const executeCode: DefaultController = async (req, res) => {
     await container.start();
 
     let timer: NodeJS.Timeout;
-    const timeoutLimit = 10000;
 
     const timeoutPromise = new Promise((_, reject) => {
       timer = setTimeout(async () => {
         await container?.kill();
-        reject(new Error("Execution timed out (Limit: 10 seconds). Infinite loops are not allowed."));
-      }, timeoutLimit);
+        reject(new ExecutionTimeoutError(`Execution timed out (Limit: ${config.EXEC_TIMEOUT_MS / 1000} seconds).`));
+      }, config.EXEC_TIMEOUT_MS);
     });
 
     await Promise.race([
@@ -82,8 +83,11 @@ export const executeCode: DefaultController = async (req, res) => {
 
     res.status(200).json({ output });
   } catch (error: any) {
-    console.error(`Execution Error: ${error.message}`);
-    res.status(500).json({ message: error.message });
+    if (error instanceof ApiError) {
+      next!(error);
+    } else {
+      throw new ApiError(`Execution error: ${error.message}`, 500);
+    }
   } finally {
     if (container) {
       try {

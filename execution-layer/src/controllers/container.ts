@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
-
 import { docker } from '../services/dockerService';
 
 import { DefaultController } from '../types/functions';
+
+import { DestroyContainerError, FetchContainerError } from '../types/errors';
 
 export const getContainers: DefaultController = async (req, res) => {
   try {
@@ -13,17 +13,25 @@ export const getContainers: DefaultController = async (req, res) => {
 
     res.status(200).json(activeRunners);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch containers', error: error.message });
+    throw new FetchContainerError("Failed to fetch controllers");
   }
 };
 
-export const deleteContainer = async (req: Request, res: Response): Promise<void> => {
+export const deleteContainer: DefaultController = async (req, res, next) => {
   try {
-    const container = docker.getContainer(req.params.id as string);
+    const { id } = req.params;
+
+    const container = docker.getContainer(id as string);
+    if (!container) throw new DestroyContainerError(`No container was found with id: ${id}`, 400);
+
     await container.remove({ force: true });
 
     res.status(200).json({ message: `Container ${req.params.id} destroyed.` });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to destroy container', error: error.message });
+    if (error instanceof DestroyContainerError && error.statusCode === 400) {
+      return next!(error);
+    }
+
+    throw new DestroyContainerError("Failed to destroy container", 500);
   }
 };
