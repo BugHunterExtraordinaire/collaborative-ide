@@ -57,7 +57,9 @@ export default function Chat() {
       }]);
     });
 
-    socket.emit('join-session', currentRoom, username);
+    if (user.role !== "System Administrator") {  
+      socket.emit('join-session', currentRoom, user);
+    }
 
     return () => {
       socket.off('chat-history');
@@ -65,7 +67,7 @@ export default function Chat() {
       socket.off('user-left');
       socket.off('receive-message');
     };
-  }, [socket, currentRoom, username]);
+  }, [socket, currentRoom, username, user]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

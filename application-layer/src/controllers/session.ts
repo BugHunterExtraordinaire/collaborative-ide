@@ -148,19 +148,22 @@ export const getSessionAnalytics: DefaultController = async (req, res) => {
   const executions = await ExecutionLog.find({ sessionId: id }).sort({ createdAt: -1 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const executionStats = executions.reduce((acc: any, log) => {
-    if (!acc[log.username]) {
-      acc[log.username] = { total: 0, success: 0, errors: 0 };
+  const executionStats = await Promise.all(executions.reduce(async (acc: any, log) => {
+    const user = await User.findOne({ _id: log.userId });
+
+    const username = user?.username || "Unknown";
+    if (!acc[username]) {
+      acc[username] = { total: 0, success: 0, errors: 0 };
     }
-    acc[log.username].total += 1;
+    acc[username].total += 1;
 
     if (log.status === 'Success') {
-      acc[log.username].success += 1;
+      acc[username].success += 1;
     } else {
-      acc[log.username].errors += 1;
+      acc[username].errors += 1;
     }
     return acc;
-  }, {});
+  }, {}));
 
   res.status(200).json({
     sessionDetails: {

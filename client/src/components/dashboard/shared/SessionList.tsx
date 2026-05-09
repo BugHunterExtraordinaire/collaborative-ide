@@ -13,7 +13,7 @@ export default function SessionList() {
   const isAdmin = user.role === 'System Administrator';
 
   const title = isAdmin ? "Global Platform Sessions" : "Your Active Sessions";
-  const joinBtnText = isAdmin ? "Spy / Join" : "Enter Room";
+  const joinBtnText = isAdmin ? "Check / Join" : "Enter Room";
 
   return (
     <div className="flex-1 bg-zinc-900 p-8 rounded-xl border border-zinc-800 shadow-lg flex flex-col h-[calc(100vh-200px)]">

@@ -2,16 +2,15 @@ import ExecutionService from '../services/executionService';
 
 import { DefaultController } from '../types/express/functions';
 
+import { BadRequestError } from '../types/express/errors';
+
 export const executeCode: DefaultController = async (req, res) => {
   const { files, language, sessionId } = req.body; 
-  const username = req.user?.username || 'Unknown'; 
+  const userId = req.user!.userId; 
 
-  if (!files || files.length === 0 || !language) {
-    res.status(400).json({ message: "Files and language are required parameters." });
-    return;
-  }
+  if (!files || files.length === 0 || !language) throw new BadRequestError("Files and language are required parameters.");
 
-  const result = await ExecutionService.runAndLog(files, language, sessionId, username);
+  const result = await ExecutionService.runAndLog(files, language, sessionId, userId);
 
   res.status(result.statusCode).json({ 
     output: result.output, 
