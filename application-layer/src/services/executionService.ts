@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import { config } from '../config/env';
+
 import ExecutionLog from '../models/ExecutionLog';
 
 import { FilePayload, ExecutionResult } from '../types/executionService/interfaces';
@@ -15,11 +17,9 @@ const ExecutionService = {
     let finalOutput = '';
     let execStatus = 'Success';
     let statusCode = 200;
-
-    const runnerUrl = process.env.EXECUTION_RUNNER_URL || 'http://localhost:5000';
-
+    
     try {
-      const runnerResponse = await axios.post(`${runnerUrl}/execute`, { files, language });
+      const runnerResponse = await axios.post(`${config.EXECUTION_LAYER_URL}/execute`, { files, language });
       
       finalOutput = runnerResponse.data.output || '';
       

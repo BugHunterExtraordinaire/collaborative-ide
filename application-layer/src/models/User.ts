@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import bcryptjs from 'bcryptjs';
 import jwt from "jsonwebtoken";
 
+import { config } from "../config/env";
+
 import { IUser } from "../types/mongoose/interfaces";
 
 const userSchema: mongoose.Schema = new mongoose.Schema({
@@ -39,7 +41,7 @@ userSchema.method('verifyPassword', async function(this: IUser, password) {
 });
 
 userSchema.method('generateJWT', function(payload: jwt.JwtPayload) {
-  return jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: process.env.JWT_LIFETIME as any });
+  return jwt.sign(payload, config.JWT_SECRET as string, { expiresIn: config.JWT_LIFETIME as any });
 });
 
 export default mongoose.model<IUser>("User", userSchema);

@@ -6,8 +6,12 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 
 import connectDB from './database/connect';
+
+import { config } from './config/env';
+
 import { setupYjsWebSocket } from './websockets/yjsManager';
 import { setupSocketIO } from './sockets/socketManager';
+
 import { handleError } from './middleware/';
 
 import authRouter from './routes/auth';
@@ -24,9 +28,8 @@ app.set('trust proxy', 1);
 
 app.use(helmet());
 
-const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
 app.use(cors({
-  origin: allowedOrigin,
+  origin: config.CLIENT_URL,
   credentials: true,
 }));;
 
@@ -40,14 +43,12 @@ app.use('/api/v1/execute', executeRouter);
 
 app.use(handleError);
 
-const port = process.env.PORT || 4000;
-
-server.listen(port, async () => {
+server.listen(config.PORT, async () => {
   try {
-    await connectDB(process.env.MONGO_URI as string);
+    await connectDB(config.MONGODB_URL);
     await setupSocketIO(server);
     await setupYjsWebSocket(server);
-    console.log(`API & Synchronization Cluster listening on http://localhost:${port}`);
+    console.log(`API & Synchronization Cluster listening on http://localhost:${config.PORT}`);
   } catch (error) {
     console.error("Error: " + error);
   }

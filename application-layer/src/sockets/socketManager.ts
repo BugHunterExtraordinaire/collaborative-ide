@@ -4,24 +4,22 @@ import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 
+import { config } from '../config/env';
+
 import { registerRoomEvents } from './events/roomEvents';
 import { registerChatEvents } from './events/chatEvents';
 import { registerExecutionEvents } from './events/executionEvents';
 
 export const setupSocketIO = async (server: http.Server) => {
 
-  const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
-
   const io = new Server(server, {
     cors: {
-      origin: allowedOrigin,
-      methods: ["GET", "POST"],
+      origin: config.CLIENT_URL,
       credentials: true,
     }
   });
 
-  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-  const pubClient = createClient({ url: redisUrl });
+  const pubClient = createClient({ url: config.REDIS_URL });
   const subClient = pubClient.duplicate();
 
   try {

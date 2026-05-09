@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 
+import { config } from '../config/env';
+
 import { UnauthenticatedError } from "../types/express/errors";
 import { DefaultMiddleware } from "../types/express/functions";
 import { UserPayload } from "../types/express";
@@ -12,7 +14,7 @@ const authenticateUser: DefaultMiddleware = async (req, res, next) => {
   }
 
   try {
-    const isVerified = jwt.verify(token, process.env.JWT_SECRET as string);
+    const isVerified = jwt.verify(token, config.JWT_SECRET as string);
     
     req.user = isVerified as UserPayload;
     next();

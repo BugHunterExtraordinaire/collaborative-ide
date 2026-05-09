@@ -1,5 +1,7 @@
 import { JwtPayload } from "jsonwebtoken";
 
+import { config } from "../config/env";
+
 import User from "../models/User";
 
 import { BadRequestError, NotFoundError } from "../types/express/errors";
@@ -23,12 +25,10 @@ export const loginUser: DefaultController = async (req, res) => {
 
   const token = user.generateJWT(jwtPayload);
 
-  const isProduction = process.env.NODE_ENV === 'production';
-
   res.cookie('ide_token', token, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: config.isProduction,
+    sameSite: config.isProduction ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24 
   });
 

@@ -5,6 +5,8 @@ import * as Y from 'yjs';
 import { createClient } from 'redis';
 import { applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 
+import { config } from '../config/env';
+
 import Session from '../models/Session';
 import OperationLog from '../models/OperationLog';
 
@@ -12,8 +14,7 @@ import OperationLog from '../models/OperationLog';
 const { setupWSConnection, getYDoc } = require('y-websocket/bin/utils');
 
 export const setupYjsWebSocket = async (server: http.Server) => {
-  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-  const pubClient = createClient({ url: redisUrl });
+  const pubClient = createClient({ url: config.REDIS_URL });
   const subClient = pubClient.duplicate();
 
   await Promise.all([pubClient.connect(), subClient.connect()]);
