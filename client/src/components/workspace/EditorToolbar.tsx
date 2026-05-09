@@ -10,7 +10,6 @@ export default function EditorToolbar() {
   const isPrivileged = user.role === 'Instructor' || user.role === 'System Administrator';
 
   const handleLeaveRoom = () => {
-    // VIABLE FIX: Simply clear the room. React will automatically unmount the Workspace and destroy the terminal/file states.
     setCurrentRoom(null);
   };
 

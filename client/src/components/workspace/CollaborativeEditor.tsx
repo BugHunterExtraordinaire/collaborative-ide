@@ -277,7 +277,7 @@ export default function CollaborativeEditor() {
       <Editor
         height="100%"
         theme="vs-dark"
-        language={language.toLowerCase()}
+        language={language}
         path={safeActiveFile}
         onMount={handleEditorDidMount}
         options={{

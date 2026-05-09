@@ -20,7 +20,7 @@ export default function TerminalPanel() {
         content: localDoc.getText(fileName).toString()
       }));
 
-      const response = await axios.post("http://localhost:80/api/v1/execute", {
+      const response = await axios.post("/execute", {
         files: filesPayload,
         language,
         sessionId: currentRoom

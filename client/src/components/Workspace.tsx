@@ -24,7 +24,6 @@ interface WorkspaceComponentProps {
 }
 
 export default function Workspace({ currentRoom, user, setCurrentRoom }: WorkspaceComponentProps) {
-  // MIGRATED FROM APP.TSX: Session-level state
   const [files, setFiles] = useState<Array<string>>([]);
   const [activeFile, setActiveFile] = useState<string>('');
   const [isPlaybackMode, setIsPlaybackMode] = useState<boolean>(false);
@@ -48,7 +47,7 @@ export default function Workspace({ currentRoom, user, setCurrentRoom }: Workspa
   const { data: historyLogs = [] } = useQuery<HistoryLogArray>({
     queryKey: ['session-history', currentRoom],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:80/api/v1/sessions/${currentRoom}/history`);
+      const res = await axios.get(`/sessions/${currentRoom}/history`);
       setPlaybackIndex(Math.max(0, res.data.length - 1));
       return res.data;
     },
@@ -59,7 +58,7 @@ export default function Workspace({ currentRoom, user, setCurrentRoom }: Workspa
   const { data: sessionDetails, isSuccess: isSessionLoaded } = useQuery({
     queryKey: ['session-details', currentRoom],
     queryFn: async () => {
-      const res = await axios.get(`http://localhost:80/api/v1/sessions/${currentRoom}`);
+      const res = await axios.get(`/sessions/${currentRoom}`);
       return res.data;
     },
     enabled: !!currentRoom,

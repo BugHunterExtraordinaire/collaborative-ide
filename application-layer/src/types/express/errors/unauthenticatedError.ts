@@ -1,4 +1,4 @@
-import ApiError from "./apiError";
+import ApiError from "./ApiError";
 
 export default class UnauthenticatedError extends ApiError {
   constructor(message: string) {
