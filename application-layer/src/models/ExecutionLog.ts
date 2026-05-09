@@ -7,9 +7,10 @@ const ExecutionLogSchema = new Schema({
     type: String, 
     required: true 
   },
-  username: { 
-    type: String, 
-    required: true 
+  userId: { 
+    type: mongoose.Types.ObjectId, 
+    required: true,
+    ref: "User"
   },
   input: { 
     type: String, 

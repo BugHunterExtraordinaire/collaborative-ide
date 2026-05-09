@@ -32,7 +32,7 @@ export interface IOperationLog extends Document {
 
 export interface IExecutionLog extends Document {
   sessionId: string;
-  username: string;
+  userId: mongoose.Types.ObjectId;
   input: string;
   output: string;
   status: string;

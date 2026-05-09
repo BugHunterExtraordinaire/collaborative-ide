@@ -11,7 +11,7 @@ const ExecutionService = {
     files: Array<FilePayload>, 
     language: string, 
     sessionId: string, 
-    username: string
+    userId: string
   ): Promise<ExecutionResult> => {
     const startTime = performance.now();
     let finalOutput = '';
@@ -42,7 +42,7 @@ const ExecutionService = {
       if (sessionId) {
         ExecutionLog.create({
           sessionId: sessionId,
-          username: username,
+          userId: userId,
           input: JSON.stringify(files), 
           output: finalOutput,
           status: execStatus,
