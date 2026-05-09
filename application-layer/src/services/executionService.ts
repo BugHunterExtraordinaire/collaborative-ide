@@ -19,7 +19,7 @@ const ExecutionService = {
     let statusCode = 200;
     
     try {
-      const runnerResponse = await axios.post(`${config.EXECUTION_LAYER_URL}//api/v1/execute`, { files, language });
+      const runnerResponse = await axios.post(`${config.EXECUTION_LAYER_URL}/api/v1/execute`, { files, language });
       
       finalOutput = runnerResponse.data.output || '';
       
