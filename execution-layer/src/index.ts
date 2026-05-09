@@ -13,7 +13,6 @@ import { getHealth } from './controllers/app';
 import handleError from './middlewares/errorHandler';
 
 const app = express();
-const port = config.PORT;
 
 app.use(helmet());
 app.use(cors({ origin: config.ALLOWED_ORIGIN }));
