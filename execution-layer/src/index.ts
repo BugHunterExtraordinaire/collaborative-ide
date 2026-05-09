@@ -28,8 +28,8 @@ const executionLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/execute', executionLimiter, executeRouter);
-app.use('/containers', containerRouter);
+app.use('/api/v1/execute', executionLimiter, executeRouter);
+app.use('/api/v1/containers', containerRouter);
 
 app.get("/health", getHealth);
 
