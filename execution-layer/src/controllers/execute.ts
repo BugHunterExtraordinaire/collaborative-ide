@@ -80,9 +80,20 @@ export const executeCode: DefaultController = async (req, res, next) => {
     
     const logs = await container.logs({ stdout: true, stderr: true });
 
-    const rawLogs = Buffer.isBuffer(logs) ? logs.toString('utf8') : String(logs);
-    const output = rawLogs.replace(/\x1b\[[0-9;]*m/g, "").trim();
-
+    let output = "";
+    if (Buffer.isBuffer(logs)) {
+      let offset = 0;
+      while (offset < logs.length) {
+        const payloadLength = logs.readUInt32BE(offset + 4);
+        output += logs.toString('utf8', offset + 8, offset + 8 + payloadLength);
+        offset += 8 + payloadLength;
+      }
+    } else {
+      output = String(logs);
+    }
+    
+    output = output.replace(/\x1b\[[0-9;]*m/g, "").trim();
+    
     res.status(200).json({ output });
   } catch (error: any) {
     if (error instanceof ApiError) {

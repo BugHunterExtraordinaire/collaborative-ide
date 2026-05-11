@@ -32,10 +32,14 @@ const ExecutionService = {
     } catch (error: any) {
       console.error('Execution proxy failed:', error.message);
       
-      finalOutput = error.response?.data?.output || error.response?.data?.message || 'Execution service unavailable.';
-      execStatus = finalOutput.includes('timed out') ? 'Timeout' : 'Error';
+      finalOutput = error.response?.data?.message || error.response?.data?.error || 'Execution service unavailable.';
       statusCode = error.response?.status || 500;
-
+    
+      if (statusCode === 408 || finalOutput.includes('timed out')) {
+        execStatus = 'Timeout';
+      } else {
+        execStatus = 'Error';
+      }
     } finally {
       const duration_ms = Math.round(performance.now() - startTime);
       
