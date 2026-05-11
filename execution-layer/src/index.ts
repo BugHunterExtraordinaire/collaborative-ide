@@ -17,7 +17,7 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet());
-app.use(cors({ origin: config.ALLOWED_ORIGIN }));
+app.use(cors({ origin: config.ALLOWED_ORIGINS }));
 app.use(express.json());
 
 const executionLimiter = rateLimit({
