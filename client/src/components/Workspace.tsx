@@ -28,7 +28,8 @@ export default function Workspace({ currentRoom, user, setCurrentRoom }: Workspa
 
   useEffect(() => {
     if (currentRoom && user) {
-      const newSocket = io("http://localhost:80", { forceNew: true });
+      const socketUrl = import.meta.env.VITE_API_URL || "http://localhost:80";
+      const newSocket = io(socketUrl, { forceNew: true });
       newSocket.on('connect', () => setSocket(newSocket));
 
       return () => {
@@ -116,7 +117,7 @@ export default function Workspace({ currentRoom, user, setCurrentRoom }: Workspa
 
           <EditorToolbar />
           <FileTabs />
-          {isPlaybackMode && <PlaybackScrubber /> }
+          {isPlaybackMode && <PlaybackScrubber />}
 
           <div className="grow relative">
             {isPlaybackMode ? (
@@ -125,7 +126,7 @@ export default function Workspace({ currentRoom, user, setCurrentRoom }: Workspa
                 path={safeActiveFile} value={playbackCode}
                 options={{ readOnly: true, minimap: { enabled: false }, fontSize: 14 }}
               />
-            ) : ( <CollaborativeEditor /> )}
+            ) : (<CollaborativeEditor />)}
           </div>
         </div>
 
