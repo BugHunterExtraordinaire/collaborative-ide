@@ -3,7 +3,6 @@ import crypto from 'crypto';
 import OperationLog from "../models/OperationLog";
 import ExecutionLog from "../models/ExecutionLog";
 import Session from '../models/Session';
-import User from "../models/User";
 
 import { ISession } from "../types/mongoose/interfaces";
 import { DefaultController } from '../types/express/functions';
@@ -32,62 +31,27 @@ export const getSessions: DefaultController = async (req, res) => {
   const userId = req.user!.userId;
   const userRole = req.user!.role;
 
-  let formattedSessions: Array<any> = [];
   let sessions: Array<ISession> = [];
 
   if (userRole === "System Administrator") {
-    sessions = await Session.find({}).select("sessionId name owner createdAt");
-    if (sessions.length === 0) throw new NotFoundError("No sessions were found");
-
-    formattedSessions = await Promise.all(sessions.map(async (session) => {
-      const user = await User.findOne({ _id: session.owner }).select("username");
-
-      let username = "";
-      let id = "";
-
-      if (!user) {
-        username = "Owner Unavailable";
-        id = "ID Unavailable";
-      } else {
-        username = user.username;
-        id = user._id.toString();
-      }
-
-      return {
-        sessionId: session.sessionId,
-        name: session.name,
-        owner: username,
-        ownerId: id,
-        createdAt: session.createdAt
-      }
-    }));
+    sessions = await Session.find({}).select("sessionId name owner createdAt").populate("owner");
   } else {
-    sessions = await Session.find({ participants: userId }).select("sessionId name owner createdAt");
-    if (sessions.length === 0) throw new NotFoundError("No sessions were found");
-    
-    formattedSessions = await Promise.all(sessions.map(async (session) => {
-      const user = await User.findOne({ _id: session.owner }).select("username");
-
-      let username = "";
-      let id = "";
-
-      if (!user) {
-        username = "Owner Unavailable";
-        id = "ID Unavailable";
-      } else {
-        username = user.username;
-        id = user._id.toString();
-      }
-
-      return {
-        sessionId: session.sessionId,
-        name: session.name,
-        owner: username,
-        ownerId: id,
-        createdAt: session.createdAt
-      }
-    }));
+    sessions = await Session.find({ participants: userId }).select("sessionId name owner createdAt").populate("owner");
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const formattedSessions = sessions.map((session: any) => {
+    const username = session.owner?.username || "Owner Unavailable";
+    const id = session.owner?._id || "ID Unavailable";
+
+    return {
+      sessionId: session.sessionId,
+      name: session.name,
+      owner: username,
+      ownerId: id,
+      createdAt: session.createdAt
+    };
+  });
 
   res.status(200).json(formattedSessions);
 }
@@ -107,7 +71,7 @@ export const getSession: DefaultController = async (req, res) => {
 
   }
 
-  res.status(200).json({ 
+  res.status(200).json({
     session,
     message: `Welcome to session: ${session.name}`
   });
@@ -117,7 +81,7 @@ export const getSessionHistory: DefaultController = async (req, res) => {
   const { id } = req.params;
 
   const logs = await OperationLog.find({ sessionId: id }).sort({ timestamp: 1 });
-  if(logs.length === 0) throw new NotFoundError("No operation logs were found for this session");
+  if (logs.length === 0) throw new NotFoundError("No operation logs were found for this session");
 
   res.status(200).json(logs);
 }
@@ -126,7 +90,7 @@ export const deleteSession: DefaultController = async (req, res) => {
   const { id } = req.params;
   const role = req.user!.role;
   const userId = req.user!.userId;
-  
+
   const session = await Session.findOne({ sessionId: id });
   if (!session) throw new NotFoundError(`No session was found with id: ${id}`);
 
@@ -145,16 +109,16 @@ export const getSessionAnalytics: DefaultController = async (req, res) => {
   const session = await Session.findOne({ sessionId: id });
   if (!session) throw new NotFoundError("Session not found");
 
-  const executions = await ExecutionLog.find({ sessionId: id }).sort({ createdAt: -1 });
+  const executions = await ExecutionLog.find({ sessionId: id }).sort({ createdAt: -1 }).populate("userId");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const executionStats = await Promise.all(executions.reduce(async (acc: any, log) => {
-    const user = await User.findOne({ _id: log.userId });
+  const executionStats = executions.reduce((acc: any, log: any) => {
+    const username = log.userId?.username || "Unknown";
 
-    const username = user?.username || "Unknown";
     if (!acc[username]) {
       acc[username] = { total: 0, success: 0, errors: 0 };
     }
+
     acc[username].total += 1;
 
     if (log.status === 'Success') {
@@ -162,9 +126,10 @@ export const getSessionAnalytics: DefaultController = async (req, res) => {
     } else {
       acc[username].errors += 1;
     }
-    return acc;
-  }, {}));
 
+    return acc;
+  }, {});
+  
   res.status(200).json({
     sessionDetails: {
       id: session.sessionId,

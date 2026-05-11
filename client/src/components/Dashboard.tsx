@@ -44,7 +44,7 @@ export default function Dashboard() {
 
   const deleteSessionMutation = useMutation({
     mutationFn: async (sessionId: string) => {
-      await axios.delete(`/sessions/${sessionId}`, { data: { role: user.role } });
+      await axios.delete(`/sessions/${sessionId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
