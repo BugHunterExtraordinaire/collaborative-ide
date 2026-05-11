@@ -24,12 +24,15 @@ export default function LoginForm({ onSuccess, onToggleMode }: AuthenticationPro
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       
+      <label htmlFor="email" className='sr-only'>Enter Email</label>
       <input
-        type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)}
+        type="email" id='email' placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)}
         className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
       />
+      
+      <label htmlFor="password" className='sr-only'>Enter Password</label>
       <input
-        type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)}
+        type="password" placeholder="Password" required id='password' value={password} onChange={(e) => setPassword(e.target.value)}
         className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
       />
       

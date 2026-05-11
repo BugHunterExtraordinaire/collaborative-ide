@@ -281,7 +281,7 @@ export default function CollaborativeEditor() {
   }).join('\n') : '';
 
   return (
-    <section className="h-full w-full relative" aria-label='Code Editor'>
+    <section className="h-full w-full relative" aria-label='Code Editor' id='editor-selected-file'>
       <style dangerouslySetInnerHTML={{ __html: dynamicCursorCSS + '\n' + dynamicBlameCSS }} />
       <Editor
         height="100%"

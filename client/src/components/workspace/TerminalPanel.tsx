@@ -84,7 +84,7 @@ export default function TerminalPanel() {
           {isRunning ? 'Running...' : 'Run Code ▶'}
         </button>
       </header>
-      <pre className="p-4 m-0 grow overflow-y-auto text-zinc-300 whitespace-pre-wrap font-mono text-sm bg-black">
+      <pre className="p-4 m-0 grow overflow-y-auto text-zinc-300 whitespace-pre-wrap font-mono text-sm bg-black" role='log' aria-live={output.toLowerCase().includes("error") ? "assertive" : "polite"}>
         {output}
       </pre>
     </aside>

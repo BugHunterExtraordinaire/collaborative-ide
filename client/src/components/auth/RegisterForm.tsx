@@ -29,24 +29,32 @@ export default function RegisterForm({ onSuccess, onToggleMode }: Authentication
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
+      <label htmlFor="username" className='sr-only'>Enter Username</label>
       <input
-        type="text" placeholder="Username" required value={username} onChange={(e) => setUsername(e.target.value)}
+        type="text" placeholder="Username" id='username' required value={username} onChange={(e) => setUsername(e.target.value)}
         className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
       />
+      
+      <label htmlFor="email" className='sr-only'>Enter Email</label>
       <input
-        type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)}
+        type="email" placeholder="Email" id='email' required value={email} onChange={(e) => setEmail(e.target.value)}
         className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
       />
+      
+      <label htmlFor="password" className='sr-only'>Enter Password</label>
       <input
         type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)}
         className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none"
       />
+      
+      <label htmlFor="role" className='sr-only'>Choose account role</label>
       <select
         value={role} onChange={(e) => setRole(e.target.value)}
+        id='role'
         className="p-3 bg-zinc-800 text-white border-none rounded focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
       >
-        <option value="Student">I am a Student</option>
-        <option value="Instructor">I am an Instructor</option>
+        <option value="Student">Student</option>
+        <option value="Instructor">Instructor</option>
       </select>
 
       <button type="submit" className="p-3 mt-2 bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded cursor-pointer font-bold">
