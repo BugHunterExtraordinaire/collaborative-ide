@@ -74,9 +74,16 @@ export default function CollaborativeEditor() {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       provider.awareness.off('change', updateAwareness);
-      provider.awareness.setLocalState(null); 
+      provider.awareness.setLocalState(null);
     };
   }, [provider, user, isAdmin]);
+
+  useEffect(() => {
+    if (!safeActiveFile) return;
+    if (editorInstance) {
+      editorInstance.focus();
+    }
+  }, [safeActiveFile, editorInstance]);
 
   useEffect(() => {
     if (!editorInstance || !localDoc || !provider || !safeActiveFile) return;
@@ -127,9 +134,9 @@ export default function CollaborativeEditor() {
 
           lines.forEach((lineText, index) => {
             const currentLine = startLineNumber + index;
-            
+
             const addedChars = lineText.length;
-            const points = addedChars > 0 ? addedChars : 1; 
+            const points = addedChars > 0 ? addedChars : 1;
 
             const lineKey = `${safeActiveFile}::${currentLine}::${user.username}`;
             const existingContrib = blameMap.get(lineKey);
@@ -144,7 +151,7 @@ export default function CollaborativeEditor() {
         });
       }
     });
-    
+
     const updateDecorations = () => {
       if (!isPrivileged) {
         decorationsRef.current?.set([]);
@@ -153,7 +160,7 @@ export default function CollaborativeEditor() {
 
       const newDecorations: editor.IModelDeltaDecoration[] = [];
       const currentBlameState = blameMap.toJSON() as Record<string, Contributor>;
-      
+
       const fileUniqueUsers: Record<string, Contributor> = {};
       const aggregatedByLine: Record<string, Contributor[]> = {};
 
@@ -189,7 +196,7 @@ export default function CollaborativeEditor() {
           if (!fileUniqueUsers[c.name]) fileUniqueUsers[c.name] = c;
         });
 
-        const hoverMarkdown = sortedContributors.map((c, i) => 
+        const hoverMarkdown = sortedContributors.map((c, i) =>
           `${i === 0 ? '🏆' : '•'} **${c.name}**: ${c.count} contributions`
         ).join('\n\n');
 
@@ -208,7 +215,7 @@ export default function CollaborativeEditor() {
     };
 
     blameMap.observe(updateDecorations);
-    updateDecorations(); 
+    updateDecorations();
 
     return () => {
       changeDisposable.dispose();
@@ -218,7 +225,7 @@ export default function CollaborativeEditor() {
 
   const dynamicCursorCSS = awarenessUsers.map(({ clientId, state }) => {
     if (!state || !state.user || !state.user.color) return '';
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { color, name, role } = state.user as any;
 
@@ -256,7 +263,7 @@ export default function CollaborativeEditor() {
   const dynamicBlameCSS = isPrivileged ? Object.values(uniqueBlameUsers).map((blameUser) => {
     const initials = blameUser.name.substring(0, 2).toUpperCase();
     const safeClass = blameUser.name.replace(/[^a-zA-Z0-9]/g, '');
-    
+
     const activeMatch = awarenessUsers.find(a => a.state.user && a.state.user.name === blameUser.name);
     const liveColor = activeMatch?.state.user?.color || blameUser.color;
 
@@ -281,7 +288,7 @@ export default function CollaborativeEditor() {
   }).join('\n') : '';
 
   return (
-    <section className="h-full w-full relative" aria-label='Code Editor' id='editor-selected-file'>
+    <section className="h-full w-full relative" id='editor-selected-file' aria-label={`Code Editor for ${safeActiveFile}`}>
       <style dangerouslySetInnerHTML={{ __html: dynamicCursorCSS + '\n' + dynamicBlameCSS }} />
       <Editor
         height="100%"
@@ -295,7 +302,9 @@ export default function CollaborativeEditor() {
           wordWrap: 'on',
           padding: { top: 16 },
           readOnly: isAdmin,
+          accessibilitySupport: 'on',
           glyphMargin: isPrivileged,
+          ariaLabel: `Code Editor. Press Control + M to toggle Tab key trapping.`
         }}
       />
     </section>
