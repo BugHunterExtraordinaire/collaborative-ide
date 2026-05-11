@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-black p-10 text-white font-sans overflow-y-auto">
+    <main className="min-h-screen bg-black p-10 text-white font-sans overflow-y-auto">
       <div className="max-w-6xl mx-auto">
         <DashboardHeader />
         
@@ -76,6 +76,6 @@ export default function AdminDashboard() {
           <SessionList />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -9,7 +9,7 @@ export default function PlaybackScrubber() {
   if (historyLogs.length === 0) return null;
 
   return (
-    <div className="p-4 bg-zinc-900 border-b border-zinc-800">
+    <article className="p-4 bg-zinc-900 border-b border-zinc-800">
       <input
         type="range"
         min="0"
@@ -18,11 +18,11 @@ export default function PlaybackScrubber() {
         onChange={(e) => setPlaybackIndex(Number(e.target.value))}
         className="w-full cursor-pointer accent-orange-500"
       />
-      <div className="text-center text-sm mt-2 text-zinc-400">
+      <p className="text-center text-sm mt-2 text-zinc-400">
         Viewing Snapshot: <strong className="text-orange-400">
           {new Date(historyLogs[playbackIndex].timestamp).toLocaleTimeString()}
         </strong>
-      </div>
-    </div>
+      </p>
+    </article>
   );
 }

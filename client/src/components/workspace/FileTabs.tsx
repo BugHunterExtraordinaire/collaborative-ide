@@ -50,7 +50,8 @@ export default function FileTabs() {
             className="px-3 py-2 text-zinc-500 hover:text-zinc-300 transition-colors font-bold"
             title="New File"
           >
-            +
+            <span className='sr-only'>Add a new code file</span>
+            <span aria-hidden='true'>+</span>
           </button>
         )
       )}

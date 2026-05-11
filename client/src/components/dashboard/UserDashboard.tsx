@@ -5,7 +5,7 @@ import SessionList from './shared/SessionList';
 export default function UserDashboard() {
 
   return (
-    <div className="min-h-screen bg-black p-10 text-white font-sans overflow-y-auto">
+    <main className="min-h-screen bg-black p-10 text-white font-sans overflow-y-auto">
       <div className="max-w-6xl mx-auto">
         <DashboardHeader />
         <div className="flex flex-col lg:flex-row gap-6">
@@ -15,6 +15,6 @@ export default function UserDashboard() {
           <SessionList />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

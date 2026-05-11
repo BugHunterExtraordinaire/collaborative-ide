@@ -15,23 +15,24 @@ export default function EditorToolbar() {
 
   return (
     <>
-      <div className="px-5 py-2.5 bg-zinc-950 flex justify-between items-center border-b border-zinc-800">
-        <div className="flex items-center gap-3">
-          <span className="text-zinc-500 text-xs font-mono bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
+      <header className="px-5 py-2.5 bg-zinc-950 flex justify-between items-center border-b border-zinc-800">
+        <section className="flex items-center gap-3" aria-label='Session Information'>
+          <p className="text-zinc-500 text-xs font-mono bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
             Session ID: {currentRoom}
-          </span>
-          <span className="text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-900/50 bg-blue-900/20 px-2 py-1 rounded">
+          </p>
+          <p className="text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-900/50 bg-blue-900/20 px-2 py-1 rounded">
+            <span className='sr-only'>Coding session language: </span>
             {language}
-          </span>
-        </div>
+          </p>
+        </section>
 
-        <div className="flex items-center gap-3">
+        <section className="flex items-center gap-3" aria-label='Session Settings'>
           {isPrivileged && (
             <button
               onClick={() => setShowAnalytics(true)}
               className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold rounded border border-zinc-700 transition-all cursor-pointer flex items-center gap-2"
             >
-              <span className="text-blue-400">📊</span> Session Data
+              <i className="fa-solid fa-chart-bar text-red-400" aria-hidden='true' />Session Data
             </button>
           )}
 
@@ -41,8 +42,8 @@ export default function EditorToolbar() {
               setPlaybackIndex(Math.max(0, historyLogs.length - 1));
             }}
             className={`px-3 py-1.5 text-xs font-semibold rounded transition-all cursor-pointer border ${isPlaybackMode
-                ? 'bg-orange-500/10 text-orange-400 border-orange-500/30 hover:bg-orange-500/20'
-                : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white'
+              ? 'bg-orange-500/10 text-orange-400 border-orange-500/30 hover:bg-orange-500/20'
+              : 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white'
               }`}
           >
             {isPlaybackMode ? '⏹ Exit Playback' : '▶ Playback Mode'}
@@ -53,11 +54,11 @@ export default function EditorToolbar() {
               onClick={handleLeaveRoom}
               className="px-3 py-1.5 bg-red-900/20 text-red-400 hover:bg-red-600 hover:text-white border border-red-900/50 text-xs font-bold rounded transition-all cursor-pointer"
             >
-              Leave
+              Leave Room
             </button>
           </div>
-        </div>
-      </div>
+        </section>
+      </header>
 
       {showAnalytics && (
         <InstructorAnalyticsModal setShowAnalytics={setShowAnalytics} />

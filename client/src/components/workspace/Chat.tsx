@@ -86,19 +86,26 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900 border-t border-zinc-800">
-      <div className="p-3 bg-zinc-800 border-b border-zinc-700 text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-2">
-        <span>Chat</span>
-      </div>
+    <aside className="flex flex-col h-full bg-zinc-900 border-t border-zinc-800" aria-labelledby='chat-heading'>
+      <h3 className="p-3 bg-zinc-800 border-b border-zinc-700 text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-2" id="chat-heading">
+        Chat
+      </h3>
       
-      <div className="grow overflow-y-auto p-4 flex flex-col gap-3">
+      <ol 
+        className="grow overflow-y-auto p-4 flex flex-col gap-3 list-none m-0" 
+        role="log" 
+        aria-live="polite"
+        aria-label="Chat messages"
+      >
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} msg={msg} currentUser={username} />
+          <li key={msg.id} className="w-full">
+            <MessageBubble msg={msg} currentUser={username} />
+          </li>
         ))}
-        <div ref={messagesEndRef} />
-      </div>
+        <div ref={messagesEndRef} aria-hidden="true" />
+      </ol>
 
       <ChatInput input={input} setInput={setInput} onSubmit={sendMessage} />
-    </div>
+    </aside>
   );
 }

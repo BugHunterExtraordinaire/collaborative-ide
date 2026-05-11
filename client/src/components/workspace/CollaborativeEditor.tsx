@@ -281,7 +281,7 @@ export default function CollaborativeEditor() {
   }).join('\n') : '';
 
   return (
-    <div className="h-full w-full relative">
+    <section className="h-full w-full relative" aria-label='Code Editor'>
       <style dangerouslySetInnerHTML={{ __html: dynamicCursorCSS + '\n' + dynamicBlameCSS }} />
       <Editor
         height="100%"
@@ -298,6 +298,6 @@ export default function CollaborativeEditor() {
           glyphMargin: isPrivileged,
         }}
       />
-    </div>
+    </section>
   );
 }

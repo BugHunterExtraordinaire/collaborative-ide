@@ -8,7 +8,7 @@ export const getContainers: DefaultController = async (req, res) => {
   try {
     const containers = await docker.listContainers({ all: true });
     const activeRunners = containers.filter(container =>
-      container.Image.includes('node') || container.Image.includes('python') || container.Image.includes('alpine')
+      container.Image.includes('node') || container.Image.includes('python') || (container.Image.includes('alpine') && !container.Image.includes('nginx'))
     );
 
     res.status(200).json(activeRunners);

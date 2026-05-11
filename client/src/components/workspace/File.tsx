@@ -8,6 +8,7 @@ export default function File({ file, safeActiveFile, setActiveFile }: FileProps)
         ? 'bg-zinc-900 text-blue-400 border-t-2 border-t-blue-500'
         : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-300'
         }`}
+      aria-label={`Open File: ${file}`}
     >
       {file}
     </button>

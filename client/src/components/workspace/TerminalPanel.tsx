@@ -70,9 +70,9 @@ export default function TerminalPanel() {
   });
 
   return (
-    <div className="h-1/2 flex flex-col border-b border-zinc-800">
-      <div className="p-3 bg-zinc-800 border-b border-zinc-700 flex justify-between items-center">
-        <h3 className="m-0 text-sm font-bold text-zinc-100 uppercase tracking-wider">Terminal Output</h3>
+    <aside className="h-1/2 flex flex-col border-b border-zinc-800" aria-labelledby='terminal-header'>
+      <header className="p-3 bg-zinc-800 border-b border-zinc-700 flex justify-between items-center">
+        <h3 className="m-0 text-sm font-bold text-zinc-100 uppercase tracking-wider" id='terminal-header'>Terminal Output</h3>
         <button
           onClick={handleRunCode}
           disabled={isRunning || isPlaybackMode}
@@ -83,10 +83,10 @@ export default function TerminalPanel() {
         >
           {isRunning ? 'Running...' : 'Run Code ▶'}
         </button>
-      </div>
+      </header>
       <pre className="p-4 m-0 grow overflow-y-auto text-zinc-300 whitespace-pre-wrap font-mono text-sm bg-black">
         {output}
       </pre>
-    </div>
+    </aside>
   );
 }

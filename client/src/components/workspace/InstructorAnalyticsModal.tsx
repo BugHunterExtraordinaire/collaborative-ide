@@ -6,7 +6,6 @@ import { useContext } from 'react';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 export default function InstructorAnalyticsModal({ setShowAnalytics }: AnalyticsModalProps) {
-
   const { currentRoom } = useContext(WorkspaceContext) as WorkspaceProps;
 
   const { data, isLoading, isError } = useQuery({
@@ -35,47 +34,61 @@ export default function InstructorAnalyticsModal({ setShowAnalytics }: Analytics
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-150 shadow-2xl flex flex-col max-h-[80vh]">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">Pedagogical Tracking & Export</h2>
-          <button onClick={handleCloseModal} className="text-zinc-400 hover:text-white font-bold cursor-pointer">✕</button>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" role="presentation">
+      <dialog 
+        open
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="analytics-modal-title"
+        className="relative m-0 bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-150 shadow-2xl flex flex-col max-h-[80vh]"
+      >
+        <header className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-white" id="analytics-modal-title">Pedagogical Tracking & Export</h2>
+          <button 
+            onClick={handleCloseModal} 
+            className="text-zinc-400 hover:text-white font-bold cursor-pointer" 
+            aria-label="Close Analytics Modal"
+            title="Close">
+            <span aria-hidden="true">✕</span>
+          </button>
+        </header>
 
         {isLoading ? (
-          <div className="text-zinc-400 animate-pulse text-center py-10">Compiling Analytics...</div>
+          <p className="text-zinc-400 animate-pulse text-center py-10" role="status" aria-live="polite">Compiling Analytics...</p>
         ) : isError ? (
-          <div className="text-red-400 text-center py-10">Failed to load session analytics.</div>
+          <p className="text-red-400 text-center py-10" role="alert" aria-live="assertive">Failed to load session analytics.</p>
         ) : (
-          <div className="flex flex-col gap-6 overflow-y-auto pr-2">
+          <section className="flex flex-col gap-6 overflow-y-auto pr-2">
 
-            <div className="bg-zinc-950 border border-zinc-800 rounded p-4">
-              <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3">Execution Contributions</h3>
+            <article className="bg-zinc-950 border border-zinc-800 rounded p-4" aria-labelledby='contributions-header'>
+              <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3" id='contributions-header'>Execution Contributions</h3>
               {Object.keys(data?.pedagogicalTracking || {}).length === 0 ? (
-                <div className="text-zinc-500 text-sm italic">No executions recorded yet.</div>
+                <p className="text-zinc-500 text-sm italic">No executions recorded yet.</p>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {(Object.entries(data.pedagogicalTracking) as [string, ExecutionStats][]).map(([username, stats]) => <UserTracking
-                                            key={username}
-                                            username={username}
-                                            stats={stats} />
-                                          )}
-                </div>
+                <ul className="flex flex-col gap-2" aria-label="List of student execution statistics">
+                  {(Object.entries(data.pedagogicalTracking) as [string, ExecutionStats][]).map(([username, stats]) => (
+                    <UserTracking
+                      key={username}
+                      username={username}
+                      stats={stats} 
+                    />
+                  ))}
+                </ul>
               )}
-            </div>
+            </article>
 
-            <div className="bg-zinc-950 border border-zinc-800 rounded p-4 text-sm text-zinc-300">
-              <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3">Session Data Captured</h3>
+            <article className="bg-zinc-950 border border-zinc-800 rounded p-4 text-sm text-zinc-300" aria-labelledby='data-captured'>
+              <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-3" id='data-captured'>Session Data Captured</h3>
               <ul className="list-disc list-inside flex flex-col gap-1">
-                <li>Total Executions Logged: <b>{data?.rawExecutionLogs?.length || 0}</b></li>
-                <li>Chat Messages Logged: <b>{data?.sessionDetails?.chatHistory?.length || 0}</b></li>
+                <li>Total Executions Logged: <strong className="font-bold">{data?.rawExecutionLogs?.length || 0}</strong></li>
+                <li>Chat Messages Logged: <strong className="font-bold">{data?.sessionDetails?.chatHistory?.length || 0}</strong></li>
               </ul>
-            </div>
+            </article>
 
-          </div>
+          </section>
         )}
 
-        <div className="mt-6 flex justify-end gap-3 border-t border-zinc-800 pt-4">
+        <footer className="mt-6 flex justify-end gap-3 border-t border-zinc-800 pt-4">
           <button
             onClick={handleCloseModal}
             className="px-4 py-2 rounded text-zinc-300 hover:bg-zinc-800 transition-colors text-sm font-bold cursor-pointer"
@@ -89,8 +102,8 @@ export default function InstructorAnalyticsModal({ setShowAnalytics }: Analytics
           >
             Download Raw JSON Data
           </button>
-        </div>
-      </div>
+        </footer>
+      </dialog>
     </div>
   );
 }

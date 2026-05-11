@@ -34,7 +34,7 @@ export default function SessionForms() {
   };
 
   return (
-    <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 shadow-lg mb-6">
+    <aside className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 shadow-lg mb-6">
       <h3 className="mt-0 text-lg font-semibold text-blue-500 mb-4">{createTitle}</h3>
       <CreateSessionForm
         handleCreate={handleCreate}
@@ -52,6 +52,6 @@ export default function SessionForms() {
         setJoinId={setJoinId}
         joinBtnText={joinBtnText}
       />
-    </div>
+    </aside>
   );
 }
