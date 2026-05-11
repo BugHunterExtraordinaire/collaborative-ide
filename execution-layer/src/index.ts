@@ -8,8 +8,6 @@ import { config } from './config/env';
 import executeRouter from './routes/execute';
 import containerRouter from './routes/container';
 
-import { getHealth } from './controllers/app';
-
 import handleError from './middlewares/errorHandler';
 
 const app = express();
@@ -30,8 +28,6 @@ const executionLimiter = rateLimit({
 
 app.use('/api/v1/execute', executionLimiter, executeRouter);
 app.use('/api/v1/containers', containerRouter);
-
-app.get("/health", getHealth);
 
 app.use(handleError);
 

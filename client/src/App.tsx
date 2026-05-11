@@ -9,7 +9,7 @@ import { DashboardContext } from './contexts/DashboardContext';
 
 import { type UserObject } from './types/interfaces';
 
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:80';
+axios.defaults.baseURL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/v1` : 'http://localhost/api/v1';
 axios.defaults.withCredentials = true;
 
 export default function App() {

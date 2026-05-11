@@ -52,7 +52,9 @@ export const executeCode: DefaultController = async (req, res, next) => {
       Env: ["FORCE_COLOR=0"],
       Tty: true,
       HostConfig: {
-        Memory: config.EXEC_MEMORY_MB * 1024 * 1024, 
+        Memory: config.EXEC_MEMORY_MB * 1024 * 1024,
+        MemorySwap: config.EXEC_MEMORY_MB * 1024 * 1024,
+        PidsLimit: 50,
         NanoCpus: config.EXEC_CPUS * 1e9,       
         NetworkMode: 'none'
       }

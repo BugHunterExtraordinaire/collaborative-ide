@@ -81,9 +81,7 @@ export const setupYjsWebSocket = async (server: http.Server) => {
             updateArray: Array.from(update)
           });
           pubClient.publish('yjs-updates', payload);
-        }
 
-        if (origin !== 'db-load') {
           if (!operationBatches.has(docName)) {
             operationBatches.set(docName, []);
           }
@@ -104,9 +102,7 @@ export const setupYjsWebSocket = async (server: http.Server) => {
 
               const batchToSave = operationBatches.get(docName) || [];
               if (batchToSave.length > 0) {
-                
                 operationBatches.set(docName, []);
-
                 const mergedUpdate = Y.mergeUpdates(batchToSave);
 
                 await OperationLog.create({
