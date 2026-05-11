@@ -70,6 +70,8 @@ export function useCollabEngine(currentRoom: string | null) {
       isMounted = false;
       newProvider.disconnect();
       newProvider.destroy();
+      newLocalDoc.destroy();
+      networkDoc.destroy();
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       setLocalDoc(null);
       setProvider(null);
