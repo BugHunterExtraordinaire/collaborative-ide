@@ -10,7 +10,7 @@ export const config = {
   isProduction,
   
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
-  EXECUTION_LAYER_URL: process.env.EXECUTION_LAYER_URL || 'http://localhost:4000',
+  EXECUTION_LAYER_URL: process.env.EXECUTION_LAYER_URL || 'http://localhost:5000',
   
   MONGODB_URL: process.env.MONGO_URI || 'mongodb://localhost:27017/collaborative-ide',
   REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
