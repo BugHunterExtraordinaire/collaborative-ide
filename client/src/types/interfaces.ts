@@ -66,6 +66,7 @@ export interface WorkspaceProps {
   user: UserObject;
   files: Array<string>;
   safeActiveFile: string;
+  sessionName: string;
   setActiveFile: (activeFile: string) => void;
   setIsPlaybackMode: (isPlaybackMode: boolean) => void;
   setPlaybackIndex: (playbackIndex: number) => void;

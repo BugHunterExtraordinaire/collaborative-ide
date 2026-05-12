@@ -60,6 +60,7 @@ export default function Workspace({ currentRoom, user, setCurrentRoom }: Workspa
   });
 
   const language: string = (sessionDetails?.session?.language || 'JavaScript').toLowerCase();
+  const sessionName: string = sessionDetails?.session.name || "Unknown";
 
   useEffect(() => {
     if (!localDoc) return;
@@ -105,7 +106,7 @@ export default function Workspace({ currentRoom, user, setCurrentRoom }: Workspa
     <WorkspaceContext.Provider value={{
       yjsStatus, currentRoom, language, isPlaybackMode, playbackIndex,
       playbackCode, localDoc, provider, socket, historyLogs, user, files,
-      safeActiveFile, setActiveFile, setIsPlaybackMode, setPlaybackIndex,
+      safeActiveFile, sessionName, setActiveFile, setIsPlaybackMode, setPlaybackIndex,
       setCurrentRoom, setFiles
     }}>
       <main className="flex h-screen bg-black text-white font-sans overflow-hidden">
