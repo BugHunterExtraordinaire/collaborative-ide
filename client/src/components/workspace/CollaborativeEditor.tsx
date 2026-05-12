@@ -190,7 +190,7 @@ export default function CollaborativeEditor() {
         if (sortedContributors.length === 0) return;
 
         const primary = sortedContributors[0];
-        const safeClass = primary.name.replace(/[^a-zA-Z0-9]/g, '');
+        const safeClass = 'u-' + primary.name.replace(/[^a-zA-Z0-9]/g, '');
 
         sortedContributors.forEach(c => {
           if (!fileUniqueUsers[c.name]) fileUniqueUsers[c.name] = c;
@@ -262,7 +262,7 @@ export default function CollaborativeEditor() {
 
   const dynamicBlameCSS = isPrivileged ? Object.values(uniqueBlameUsers).map((blameUser) => {
     const initials = blameUser.name.substring(0, 2).toUpperCase();
-    const safeClass = blameUser.name.replace(/[^a-zA-Z0-9]/g, '');
+    const safeClass = 'u-' + blameUser.name.replace(/[^a-zA-Z0-9]/g, '');
 
     const activeMatch = awarenessUsers.find(a => a.state.user && a.state.user.name === blameUser.name);
     const liveColor = activeMatch?.state.user?.color || blameUser.color;

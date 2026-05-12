@@ -29,7 +29,7 @@ export default function TerminalPanel() {
       const resultOutput = response.data.output || 'Execution successful (No output)';
       setOutput(resultOutput);
 
-      if (socket) {
+      if (socket && user?.role !== "System Administrator") {
         socket.emit('broadcast-execution', {
           sessionId: currentRoom,
           output: `[${user?.username} Broadcast]:\n${resultOutput}`
@@ -40,7 +40,7 @@ export default function TerminalPanel() {
       const errorMsg = axios.isAxiosError(error) ? (error.response?.data?.message || 'Error') : 'Error';
       setOutput(errorMsg);
 
-      if (socket) {
+      if (socket && user?.role !== "System Administrator") {
         socket.emit('broadcast-execution', {
           sessionId: currentRoom,
           output: `[${user?.username} Broadcast Failed]:\n${errorMsg}`
