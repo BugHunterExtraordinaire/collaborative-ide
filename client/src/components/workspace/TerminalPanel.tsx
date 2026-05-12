@@ -29,15 +29,8 @@ export default function TerminalPanel() {
       const resultOutput = response.data.output || 'Execution successful (No output)';
       setOutput(resultOutput);
 
-      if (user?.role === 'Instructor' && socket) {
-        socket.emit('instructor-execution', {
-          sessionId: currentRoom,
-          output: `[Instructor Broadcast]:\n${resultOutput}`
-        });
-      }
-
       if (user?.role === 'Student' && socket) {
-        socket.emit('student-execution', {
+        socket.emit('broadcast-execution', {
           sessionId: currentRoom,
           output: `[${user?.username} Broadcast]:\n${resultOutput}`
         });
@@ -47,15 +40,8 @@ export default function TerminalPanel() {
       const errorMsg = axios.isAxiosError(error) ? (error.response?.data?.message || 'Error') : 'Error';
       setOutput(errorMsg);
 
-      if (user?.role === 'Instructor' && socket) {
-        socket.emit('instructor-execution', {
-          sessionId: currentRoom,
-          output: `[Instructor Broadcast Failed]:\n${errorMsg}`
-        });
-      }
-
-      if (user?.role === 'Student' && socket) {
-        socket.emit('student-execution', {
+      if (socket) {
+        socket.emit('broadcast-execution', {
           sessionId: currentRoom,
           output: `[${user?.username} Broadcast Failed]:\n${errorMsg}`
         });

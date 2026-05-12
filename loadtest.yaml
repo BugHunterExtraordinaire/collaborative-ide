@@ -1,0 +1,29 @@
+config:
+  target: "http://localhost:80" 
+  phases:
+    - duration: 20 
+      arrivalRate: 5 
+  engines:
+    socketio-v3: {}
+
+scenarios:
+  - name: "Classroom rapid typing simulation"
+    engine: socketio-v3
+    flow:
+      - connect:
+          transports: ["websocket"]
+      - emit:
+          channel: "join-session"
+          data: 
+            - "load-test-room"
+            - { "username": "VirtualStudent", "role": "Student" }
+      - think: 1
+      - loop:
+          - emit:
+              channel: "broadcast-execution"
+              data:
+                sessionId: "load-test-room"
+                message: "function test() { console.log('Artillery Load Test'); }"
+                username: "VirtualStudent"
+          - think: 0.5 
+        count: 10
