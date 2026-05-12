@@ -50,7 +50,7 @@ export const executeCode: DefaultController = async (req, res, next) => {
       Image: dockerImg,
       Cmd: executionCmd,
       Env: ["FORCE_COLOR=0"],
-      Tty: true,
+      Tty: false,
       HostConfig: {
         Memory: config.EXEC_MEMORY_MB * 1024 * 1024,
         MemorySwap: config.EXEC_MEMORY_MB * 1024 * 1024,

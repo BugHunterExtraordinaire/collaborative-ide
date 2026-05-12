@@ -12,6 +12,8 @@ scenarios:
     flow:
       - connect:
           transports: ["websocket"]
+          extraHeaders:
+            Origin: "http://localhost:5173" 
       - emit:
           channel: "join-session"
           data: 
@@ -23,7 +25,6 @@ scenarios:
               channel: "broadcast-execution"
               data:
                 sessionId: "load-test-room"
-                message: "function test() { console.log('Artillery Load Test'); }"
-                username: "VirtualStudent"
+                output: "[VirtualStudent Broadcast]:\nExecution successful (Artillery Test)"
           - think: 0.5 
         count: 10

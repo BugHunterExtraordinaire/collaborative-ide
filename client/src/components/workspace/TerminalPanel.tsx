@@ -29,7 +29,7 @@ export default function TerminalPanel() {
       const resultOutput = response.data.output || 'Execution successful (No output)';
       setOutput(resultOutput);
 
-      if (user?.role === 'Student' && socket) {
+      if (socket) {
         socket.emit('broadcast-execution', {
           sessionId: currentRoom,
           output: `[${user?.username} Broadcast]:\n${resultOutput}`
