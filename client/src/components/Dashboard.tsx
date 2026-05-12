@@ -66,15 +66,18 @@ export default function Dashboard() {
   };
 
   return (
-    <UserDashboardContext.Provider value={{
-      user,
-      onJoinRoom,
-      onLogout,
-      handleDeleteSession,
-      handleCreateSession,
-      sessions,
-    }}>
-      {isAdmin ? <AdminDashboard /> : <UserDashboard />}
-    </UserDashboardContext.Provider>
+    <>
+      <title>{`${user.username} Dashboard`}</title>
+      <UserDashboardContext.Provider value={{
+        user,
+        onJoinRoom,
+        onLogout,
+        handleDeleteSession,
+        handleCreateSession,
+        sessions,
+      }}>
+        {isAdmin ? <AdminDashboard /> : <UserDashboard />}
+      </UserDashboardContext.Provider>
+    </>
   );
 }

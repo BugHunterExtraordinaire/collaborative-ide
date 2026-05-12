@@ -116,29 +116,59 @@ export default function CollaborativeEditor() {
     const changeDisposable = editorInstance.onDidChangeModelContent((e) => {
       if (editorInstance.hasTextFocus()) {
         e.changes.forEach(change => {
-          const { startLineNumber, endLineNumber } = change.range;
+          const { startLineNumber, endLineNumber, startColumn, endColumn } = change.range;
+          const newLines = change.text.split('\n');
+          
+          const linesAdded = newLines.length - 1;
+          const linesRemoved = endLineNumber - startLineNumber;
+          const lineDelta = linesAdded - linesRemoved;
 
-          if (endLineNumber > startLineNumber) {
+          const filePrefix = `${safeActiveFile}::`;
+
+          const eraseStart = startColumn === 1 ? startLineNumber : startLineNumber + 1;
+          const eraseEnd = endColumn === 1 ? endLineNumber - 1 : endLineNumber;
+          const shiftHorizon = endColumn === 1 ? endLineNumber : endLineNumber + 1;
+
+          if (eraseStart <= eraseEnd) {
             Array.from(blameMap.keys()).forEach(key => {
-              const parts = key.split('::');
-              if (parts[0] === safeActiveFile) {
-                const line = parseInt(parts[1], 10);
-                if (line >= startLineNumber && line <= endLineNumber) {
+              if (key.startsWith(filePrefix)) {
+                const line = parseInt(key.split('::')[1], 10);
+                if (line >= eraseStart && line <= eraseEnd) {
                   blameMap.delete(key);
                 }
               }
             });
           }
 
-          const lines = change.text.split('\n');
+          if (lineDelta !== 0) {
+            const keysToShift: { oldKey: string; line: number; user: string; data: Contributor }[] = [];
 
-          lines.forEach((lineText, index) => {
+            Array.from(blameMap.keys()).forEach(key => {
+              if (key.startsWith(filePrefix)) {
+                const parts = key.split('::');
+                const line = parseInt(parts[1], 10);
+                
+                if (line >= shiftHorizon) {
+                  keysToShift.push({ oldKey: key, line, user: parts[2], data: blameMap.get(key)! });
+                }
+              }
+            });
+
+            keysToShift.sort((a, b) => lineDelta > 0 ? b.line - a.line : a.line - b.line);
+
+            keysToShift.forEach(({ oldKey, line, user, data }) => {
+              blameMap.delete(oldKey);
+              const newKey = `${filePrefix}${line + lineDelta}::${user}`;
+              blameMap.set(newKey, data);
+            });
+          }
+
+          newLines.forEach((lineText, index) => {
             const currentLine = startLineNumber + index;
-
             const addedChars = lineText.length;
             const points = addedChars > 0 ? addedChars : 1;
 
-            const lineKey = `${safeActiveFile}::${currentLine}::${user.username}`;
+            const lineKey = `${filePrefix}${currentLine}::${user.username}`;
             const existingContrib = blameMap.get(lineKey);
 
             blameMap.set(lineKey, {

@@ -103,44 +103,47 @@ export default function Workspace({ currentRoom, user, setCurrentRoom }: Workspa
   }, [playbackIndex, historyLogs, isPlaybackMode, safeActiveFile]);
 
   return (
-    <WorkspaceContext.Provider value={{
-      yjsStatus, currentRoom, language, isPlaybackMode, playbackIndex,
-      playbackCode, localDoc, provider, socket, historyLogs, user, files,
-      safeActiveFile, sessionName, setActiveFile, setIsPlaybackMode, setPlaybackIndex,
-      setCurrentRoom, setFiles
-    }}>
-      <main className="flex h-screen bg-black text-white font-sans overflow-hidden">
-        <section className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900"
-                 aria-label="Code Editor and File Management">
-          <div className="absolute top-10 right-[41%] z-10 text-xs font-mono px-2 py-1 bg-black/50 rounded border border-zinc-700 flex items-center gap-2" 
-               role="status" 
-               aria-live="polite">
-            <span className={`w-2 h-2 rounded-full ${yjsStatus === 'Connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} aria-hidden='true'></span>
-            <span className="sr-only">Connection Status: </span>{yjsStatus}
-          </div>
+    <>
+      <title>{sessionName}</title>
+      <WorkspaceContext.Provider value={{
+        yjsStatus, currentRoom, language, isPlaybackMode, playbackIndex,
+        playbackCode, localDoc, provider, socket, historyLogs, user, files,
+        safeActiveFile, sessionName, setActiveFile, setIsPlaybackMode, setPlaybackIndex,
+        setCurrentRoom, setFiles
+      }}>
+        <main className="flex h-screen bg-black text-white font-sans overflow-hidden">
+          <section className="w-3/5 border-r border-zinc-800 flex flex-col bg-zinc-900"
+            aria-label="Code Editor and File Management">
+            <div className="absolute top-10 right-[41%] z-10 text-xs font-mono px-2 py-1 bg-black/50 rounded border border-zinc-700 flex items-center gap-2"
+              role="status"
+              aria-live="polite">
+              <span className={`w-2 h-2 rounded-full ${yjsStatus === 'Connected' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} aria-hidden='true'></span>
+              <span className="sr-only">Connection Status: </span>{yjsStatus}
+            </div>
 
-          <EditorToolbar />
-          <FileTabs />
-          {isPlaybackMode && <PlaybackScrubber />}
+            <EditorToolbar />
+            <FileTabs />
+            {isPlaybackMode && <PlaybackScrubber />}
 
-          <div className="grow relative">
-            {isPlaybackMode ? (
-              <Editor
-                height="100%" theme="vs-dark" language={language.toLowerCase()}
-                path={safeActiveFile} value={playbackCode}
-                options={{ readOnly: true, minimap: { enabled: false }, fontSize: 14 }}
-              />
-            ) : (<CollaborativeEditor />)}
-          </div>
-        </section>
+            <div className="grow relative">
+              {isPlaybackMode ? (
+                <Editor
+                  height="100%" theme="vs-dark" language={language.toLowerCase()}
+                  path={safeActiveFile} value={playbackCode}
+                  options={{ readOnly: true, minimap: { enabled: false }, fontSize: 14 }}
+                />
+              ) : (<CollaborativeEditor />)}
+            </div>
+          </section>
 
-        <aside className="w-2/5 flex flex-col bg-zinc-900">
-          <TerminalPanel />
-          <div className="h-1/2 flex flex-col border-t border-zinc-800">
-            <Chat />
-          </div>
-        </aside>
-      </main>
-    </WorkspaceContext.Provider>
+          <aside className="w-2/5 flex flex-col bg-zinc-900">
+            <TerminalPanel />
+            <div className="h-1/2 flex flex-col border-t border-zinc-800">
+              <Chat />
+            </div>
+          </aside>
+        </main>
+      </WorkspaceContext.Provider>
+    </>
   );
 }
