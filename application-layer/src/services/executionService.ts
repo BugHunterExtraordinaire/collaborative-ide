@@ -33,12 +33,17 @@ const ExecutionService = {
       console.error('Execution proxy failed:', error.message);
       
       finalOutput = error.response?.data?.message || error.response?.data?.error || 'Execution service unavailable.';
-      statusCode = error.response?.status || 500;
+      const proxyStatus = error.response?.status || 500;
     
-      if (statusCode === 408 || finalOutput.includes('timed out')) {
+      if (proxyStatus === 422 || finalOutput.includes('timed out')) {
         execStatus = 'Timeout';
+        statusCode = 200; 
+      } else if (proxyStatus === 400 || proxyStatus === 500) {
+        execStatus = 'Error';
+        statusCode = 200; 
       } else {
         execStatus = 'Error';
+        statusCode = 500;
       }
     } finally {
       const duration_ms = Math.round(performance.now() - startTime);

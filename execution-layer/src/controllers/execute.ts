@@ -62,24 +62,32 @@ export const executeCode: DefaultController = async (req, res, next) => {
 
     await container.start();
 
-    let timer: NodeJS.Timeout;
+    const waitPromise = container.wait().catch(() => null);
 
+    let timer: NodeJS.Timeout;
     const timeoutPromise = new Promise((_, reject) => {
       timer = setTimeout(async () => {
-        await container?.kill();
+        try {
+          await container?.kill();
+        } catch (e) { } 
         reject(new ExecutionTimeoutError(`Execution timed out (Limit: ${config.EXEC_TIMEOUT_MS / 1000} seconds).`));
       }, config.EXEC_TIMEOUT_MS);
     });
 
     await Promise.race([
-      container.wait(),
+      waitPromise,
       timeoutPromise
     ]);
 
     clearTimeout(timer!);
-    
-    const logs = await container.logs({ stdout: true, stderr: true });
 
+    let logs: Buffer | string = "";
+    try {
+      logs = await container.logs({ stdout: true, stderr: true });
+    } catch (logErr) {
+      logs = Buffer.from("Process terminated abruptly (Possible Out-Of-Memory or OS Kill).");
+    }
+    
     let output = "";
     if (Buffer.isBuffer(logs)) {
       let offset = 0;
