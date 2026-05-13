@@ -9,4 +9,20 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:80', 
+        changeOrigin: true,
+      },
+      '/socket.io': {
+        target: 'http://localhost:80',
+        ws: true,
+      },
+      '/yjs': {
+        target: 'http://localhost:80',
+        ws: true,
+      }
+    }
+  }
 })
