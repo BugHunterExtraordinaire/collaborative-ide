@@ -6,7 +6,7 @@ import Session from '../models/Session';
 
 import { ISession } from "../types/mongoose/interfaces";
 import { DefaultController } from '../types/express/functions';
-import { ForbiddenError, NotFoundError } from "../types/express/errors";
+import { ForbiddenError, NotFoundError, UnauthenticatedError } from "../types/express/errors";
 
 export const createSession: DefaultController = async (req, res) => {
   const { name, language } = req.body;
@@ -105,6 +105,9 @@ export const deleteSession: DefaultController = async (req, res) => {
 
 export const getSessionAnalytics: DefaultController = async (req, res) => {
   const { id } = req.params;
+  const role = req.user!.role;
+
+  if (role !== "Instructor" && role !== "System Administrator") throw new UnauthenticatedError("Students are not authorized to view session analytics");
 
   const session = await Session.findOne({ sessionId: id });
   if (!session) throw new NotFoundError("Session not found");

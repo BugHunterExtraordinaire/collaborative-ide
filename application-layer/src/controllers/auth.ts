@@ -42,6 +42,8 @@ export const registerUser: DefaultController = async (req, res) => {
   const { username, email, password, role } = req.body;
   if (!username || !email || !password || !role) throw new BadRequestError("Please provide all fields");
 
+  if (role.toLowerCase().includes("system administrator")) throw new BadRequestError("Not allowed to register as system administrator");
+
   const existingUser = await User.findOne({ $or: [{ email }, { username }] });
   if (existingUser) throw new BadRequestError("User with that email or username already exists");
 
