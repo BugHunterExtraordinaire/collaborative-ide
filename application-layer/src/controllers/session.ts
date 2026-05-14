@@ -10,7 +10,12 @@ import { ForbiddenError, NotFoundError, UnauthenticatedError } from "../types/ex
 
 export const createSession: DefaultController = async (req, res) => {
   const { name, language } = req.body;
-  const sessionId = crypto.randomBytes(4).toString('hex');
+  let sessionId = "";
+
+  do {
+    sessionId = crypto.randomBytes(4).toString('hex');
+  } while (await Session.findOne({ sessionId: sessionId }));
+
   const userId = req.user!.userId;
 
   const session = await Session.create({

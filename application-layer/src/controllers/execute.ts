@@ -1,12 +1,17 @@
 import ExecutionService from '../services/executionService';
 
+import Session from '../models/Session';
+
 import { DefaultController } from '../types/express/functions';
 
-import { BadRequestError } from '../types/express/errors';
+import { BadRequestError, NotFoundError } from '../types/express/errors';
 
 export const executeCode: DefaultController = async (req, res) => {
   const { files, language, sessionId } = req.body; 
   const userId = req.user!.userId; 
+
+  const session = await Session.findOne({ sessionId: sessionId });
+  if (!session) throw new NotFoundError(`No session was found with id: ${sessionId}`);
 
   if (!files || files.length === 0 || !language) throw new BadRequestError("Files and language are required parameters.");
 
