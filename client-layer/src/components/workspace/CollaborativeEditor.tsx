@@ -116,6 +116,14 @@ export default function CollaborativeEditor() {
     const changeDisposable = editorInstance.onDidChangeModelContent((e) => {
       if (editorInstance.hasTextFocus()) {
         e.changes.forEach(change => {
+          const normalizedText = change.text.replace(/\r/g, '');
+          const charsAdded = normalizedText.length;
+          const charsDeleted = change.rangeLength;
+          
+          if (charsAdded === 0 && charsDeleted === 0) {
+            return; 
+          }
+
           const { startLineNumber, endLineNumber, startColumn, endColumn } = change.range;
           const newLines = change.text.split('\n');
           
@@ -162,19 +170,25 @@ export default function CollaborativeEditor() {
               blameMap.set(newKey, data);
             });
           }
-
-          newLines.forEach((lineText, index) => {
+          
+          newLines.forEach((_, index) => {
             const currentLine = startLineNumber + index;
-            const addedChars = lineText.length;
-            const points = addedChars > 0 ? addedChars : 1;
-
+            
             const lineKey = `${filePrefix}${currentLine}::${user.username}`;
             const existingContrib = blameMap.get(lineKey);
+
+            let newCount = existingContrib ? existingContrib.count : 0;
+
+            if (index === 0) {
+              newCount = Math.max(0, newCount + charsAdded - charsDeleted);
+            } else {
+              newCount += 1;
+            }
 
             blameMap.set(lineKey, {
               name: user.username,
               color: userColorRef.current,
-              count: (existingContrib ? existingContrib.count : 0) + points,
+              count: newCount,
               lastEdited: Date.now()
             });
           });
