@@ -41,8 +41,8 @@ export const getSessions: DefaultController = async (req, res) => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formattedSessions = sessions.map((session: any) => {
-    const username = session.owner?.username || "Owner Unavailable";
-    const id = session.owner?._id || "ID Unavailable";
+    const username = session.owner?.username || "Unavailable";
+    const id = session.owner?._id || "Unavailable";
 
     return {
       sessionId: session.sessionId,
